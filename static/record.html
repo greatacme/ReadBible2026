@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>성경통독 기록</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+  <!-- Sticky Header -->
+  <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
+    <button onclick="location.href='/'" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
+    <div class="flex-1 min-w-0">
+      <h1 id="userName" class="text-base font-bold truncate">성경통독 기록</h1>
+      <p id="userRate" class="text-blue-300 text-xs"></p>
+    </div>
+    <div id="saveIndicator"
+         class="text-xs text-green-300 opacity-0 transition-opacity duration-500 whitespace-nowrap">
+      저장됨 ✓
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto p-4">
+    <div id="content">
+      <p class="text-gray-400 text-center py-10">불러오는 중...</p>
+    </div>
+  </main>
+
+  <script>
+    const params   = new URLSearchParams(location.search);
+    const nickname = params.get('nickname');
+    if (!nickname) location.href = '/';
+
+    let saveTimer = null;
+    let plannedToday = 0;
+    let completedCount = 0;
+
+    const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return `${d.getMonth() + 1}/${d.getDate()}(${DAYS[d.getDay()]})`;
+    }
+
+    function updateRateDisplay() {
+      const rate = plannedToday > 0
+        ? (completedCount / plannedToday * 100).toFixed(1)
+        : '0.0';
+      document.getElementById('userRate').textContent =
+        `완료율 ${rate}% · ${completedCount}/${plannedToday}장`;
+    }
+
+    async function loadRecords() {
+      const res = await fetch(`/api/records/${encodeURIComponent(nickname)}`);
+      if (!res.ok) { location.href = '/'; return; }
+
+      const records = await res.json();
+      const today   = new Date().toISOString().split('T')[0];
+
+      plannedToday   = records.filter(r => r.date <= today).length;
+      completedCount = records.filter(r => r.completed).length;
+
+      document.getElementById('userName').textContent = `${nickname}님의 성경통독`;
+      updateRateDisplay();
+
+      // Group by month
+      const months = {};
+      for (const r of records) {
+        const ym = r.date.substring(0, 7);
+        (months[ym] = months[ym] || []).push(r);
+      }
+
+      const currentYM = today.substring(0, 7);
+
+      const content = document.getElementById('content');
+      content.innerHTML = Object.entries(months).map(([ym, items]) => {
+        const [y, m]       = ym.split('-');
+        const monthDone    = items.filter(i => i.completed).length;
+        const isCurrentMonth = ym === currentYM;
+        const isPast       = ym < currentYM;
+
+        return `
+        <div class="bg-white rounded-2xl shadow mb-4 overflow-hidden">
+          <button onclick="toggleMonth('${ym}')"
+            class="w-full flex items-center justify-between px-4 py-3 ${isCurrentMonth ? 'bg-blue-50' : 'bg-gray-50'} hover:brightness-95 transition">
+            <span class="font-semibold ${isCurrentMonth ? 'text-blue-800' : 'text-gray-600'}">
+              ${y}년 ${parseInt(m)}월
+              ${isCurrentMonth ? '<span class="text-xs font-normal text-blue-500 ml-1">이번 달</span>' : ''}
+            </span>
+            <span class="text-xs ${monthDone === items.length ? 'text-green-600 font-semibold' : 'text-gray-500'}">
+              ${monthDone}/${items.length}장 완료
+            </span>
+          </button>
+          <div id="month-${ym}" class="${isPast ? 'hidden' : ''} divide-y">
+            ${items.map(item => `
+            <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition" id="row-${item.plan_id}">
+              <input type="checkbox" id="chk-${item.plan_id}"
+                ${item.completed ? 'checked' : ''}
+                onchange="save(${item.plan_id}, this.checked)"
+                class="w-5 h-5 accent-blue-700 cursor-pointer flex-shrink-0"/>
+              <label for="chk-${item.plan_id}" class="flex-1 cursor-pointer flex items-center gap-2 min-w-0">
+                <span class="text-xs text-gray-400 flex-shrink-0">${formatDate(item.date)}</span>
+                <span id="desc-${item.plan_id}"
+                  class="text-sm truncate ${item.completed ? 'text-gray-400 line-through' : 'text-gray-800'}">
+                  ${item.description}
+                </span>
+              </label>
+            </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleMonth(ym) {
+      document.getElementById(`month-${ym}`).classList.toggle('hidden');
+    }
+
+    async function save(planId, completed) {
+      // 즉시 UI 반영
+      completedCount += completed ? 1 : -1;
+      updateRateDisplay();
+
+      const desc = document.getElementById(`desc-${planId}`);
+      if (desc) {
+        if (completed) {
+          desc.classList.add('text-gray-400', 'line-through');
+          desc.classList.remove('text-gray-800');
+        } else {
+          desc.classList.remove('text-gray-400', 'line-through');
+          desc.classList.add('text-gray-800');
+        }
+      }
+
+      // 서버 저장
+      await fetch(`/api/records/${encodeURIComponent(nickname)}/${planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed }),
+      });
+
+      // 저장 표시
+      const ind = document.getElementById('saveIndicator');
+      ind.style.opacity = '1';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { ind.style.opacity = '0'; }, 2000);
+    }
+
+    loadRecords();
+  </script>
+</body>
+</html>
