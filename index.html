@@ -33,7 +33,7 @@
 
     <!-- TOP 10 차트 -->
     <section class="bg-white rounded-2xl shadow p-5">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">🏆 완료율 TOP 10</h2>
+      <h2 class="text-base font-semibold text-gray-700 mb-4">🏆 TOP 10</h2>
       <canvas id="chart" class="hidden"></canvas>
       <p id="chartEmpty" class="text-gray-400 text-sm text-center py-4 hidden">아직 참여자가 없습니다</p>
       <p id="chartLoading" class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
@@ -76,6 +76,7 @@
     function renderChart(data) {
       const canvas = document.getElementById('chart')
       canvas.classList.remove('hidden')
+      canvas.style.height = (data.length * 36 + 20) + 'px'
       const maxVal = Math.max(100, ...data.map(d => Number(d.rate)))
       if (chartInstance) chartInstance.destroy()
       chartInstance = new Chart(canvas.getContext('2d'), {
@@ -93,6 +94,7 @@
         },
         options: {
           indexAxis: 'y',
+          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             x: { beginAtZero: true, max: maxVal, ticks: { callback: v => v + '%' } }
