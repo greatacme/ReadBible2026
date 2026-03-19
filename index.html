@@ -95,7 +95,8 @@
           indexAxis: 'y',
           plugins: { legend: { display: false } },
           scales: {
-            x: { beginAtZero: true, max: maxVal, ticks: { callback: v => v + '%' } }
+            x: { beginAtZero: true, max: maxVal, ticks: { callback: v => v + '%' } },
+            y: { ticks: { autoSkip: false, font: { size: 10 } } }
           }
         }
       })
