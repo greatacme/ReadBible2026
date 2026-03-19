@@ -85,9 +85,11 @@
 
     // ── 스크롤 감지 ──────────────────────────────────────────────────────
     function checkScroll() {
+      if (scrolledToBottom) return
       if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 60) {
         scrolledToBottom = true
         document.getElementById('scrollHint').classList.add('hidden')
+        markComplete()
       }
     }
     window.addEventListener('scroll', checkScroll, { passive: true })
