@@ -33,7 +33,7 @@
 
     <!-- TOP 10 차트 -->
     <section class="bg-white rounded-2xl shadow p-5">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">🏆 TOP 10</h2>
+      <h2 class="text-base font-semibold text-gray-700 mb-4">🏆 완독률 TOP</h2>
       <canvas id="chart" class="hidden"></canvas>
       <p id="chartEmpty" class="text-gray-400 text-sm text-center py-4 hidden">아직 참여자가 없습니다</p>
       <p id="chartLoading" class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
@@ -76,7 +76,6 @@
     function renderChart(data) {
       const canvas = document.getElementById('chart')
       canvas.classList.remove('hidden')
-      canvas.style.height = (data.length * 36 + 20) + 'px'
       const maxVal = Math.max(100, ...data.map(d => Number(d.rate)))
       if (chartInstance) chartInstance.destroy()
       chartInstance = new Chart(canvas.getContext('2d'), {
@@ -84,7 +83,7 @@
         data: {
           labels: data.map(d => d.nickname),
           datasets: [{
-            label: '완료율 (%)',
+            label: '완독률 (%)',
             data: data.map(d => Number(d.rate)),
             backgroundColor: data.map((_, i) =>
               i === 0 ? '#1e3a8a' : i === 1 ? '#1d4ed8' : i === 2 ? '#2563eb' : '#93c5fd'
@@ -94,7 +93,6 @@
         },
         options: {
           indexAxis: 'y',
-          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             x: { beginAtZero: true, max: maxVal, ticks: { callback: v => v + '%' } }
