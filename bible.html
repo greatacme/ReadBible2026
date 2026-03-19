@@ -26,20 +26,22 @@
   </main>
 
   <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-    <div class="max-w-2xl mx-auto flex gap-2 p-3">
+    <div class="max-w-2xl mx-auto flex items-center gap-2 p-3">
       <button id="prevBtn" onclick="navigate(-1)"
         class="flex-1 py-3 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
         disabled>
         ◀ 이전
       </button>
+      <label class="flex flex-col items-center gap-0.5 px-3 cursor-pointer select-none">
+        <input type="checkbox" id="completeChk" onchange="toggleComplete(this.checked)"
+          class="w-6 h-6 accent-blue-700 cursor-pointer"/>
+        <span class="text-xs text-gray-500 whitespace-nowrap">읽기 완</span>
+      </label>
       <button id="nextBtn" onclick="navigate(1)"
         class="flex-1 py-3 rounded-lg bg-blue-800 text-white text-sm font-semibold hover:bg-blue-900 transition"
         disabled>
         다음 ▶
       </button>
-    </div>
-    <div id="scrollHint" class="text-center text-xs text-gray-400 pb-2 hidden">
-      끝까지 스크롤하면 읽기 완료로 처리됩니다
     </div>
   </footer>
 
@@ -77,45 +79,51 @@
 
     if (!nickname || !book || !chapterNo) location.href = 'index.html'
 
-    let userId          = null
+    let userId           = null
     let scrolledToBottom = false
-    let saveTimer       = null
-    let prevPlan        = null
-    let nextPlan        = null
+    let saveTimer        = null
+    let prevPlan         = null
+    let nextPlan         = null
 
-    // ── 스크롤 감지 ──────────────────────────────────────────────────────
-    function checkScroll() {
-      if (scrolledToBottom) return
-      if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 60) {
-        scrolledToBottom = true
-        document.getElementById('scrollHint').classList.add('hidden')
-        markComplete()
-      }
-    }
-    window.addEventListener('scroll', checkScroll, { passive: true })
-
-    // ── 뒤로 가기 ────────────────────────────────────────────────────────
-    async function goBack() {
-      if (scrolledToBottom) await markComplete()
-      location.href = `record.html?nickname=${encodeURIComponent(nickname)}`
-    }
-
-    // ── 읽기 완료 저장 ───────────────────────────────────────────────────
-    async function markComplete() {
-      if (!userId || !planId) return
-      await sb.from('records').upsert(
-        { user_id: userId, plan_id: planId, completed: true, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,plan_id' }
-      )
+    // ── 저장 표시 ────────────────────────────────────────────────────────
+    function showSaveIndicator() {
       const ind = document.getElementById('saveIndicator')
       ind.style.opacity = '1'
       clearTimeout(saveTimer)
       saveTimer = setTimeout(() => { ind.style.opacity = '0' }, 2000)
     }
 
+    // ── 스크롤 감지 ──────────────────────────────────────────────────────
+    function checkScroll() {
+      if (scrolledToBottom) return
+      if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 60) {
+        scrolledToBottom = true
+        const chk = document.getElementById('completeChk')
+        if (chk && !chk.checked) {
+          chk.checked = true
+          toggleComplete(true)
+        }
+      }
+    }
+    window.addEventListener('scroll', checkScroll, { passive: true })
+
+    // ── 뒤로 가기 ────────────────────────────────────────────────────────
+    function goBack() {
+      location.href = `record.html?nickname=${encodeURIComponent(nickname)}`
+    }
+
+    // ── 읽기 완료 토글 저장 ──────────────────────────────────────────────
+    async function toggleComplete(checked) {
+      if (!userId || !planId) return
+      await sb.from('records').upsert(
+        { user_id: userId, plan_id: planId, completed: checked, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,plan_id' }
+      )
+      showSaveIndicator()
+    }
+
     // ── 이전/다음 이동 ───────────────────────────────────────────────────
-    async function navigate(dir) {
-      if (scrolledToBottom) await markComplete()
+    function navigate(dir) {
       const target = dir > 0 ? nextPlan : prevPlan
       if (!target) return
       location.href = `bible.html?nickname=${encodeURIComponent(nickname)}&plan_id=${target.id}&book=${encodeURIComponent(target.book)}&chapter_no=${target.chapter_no}&sort_order=${target.sort_order}`
@@ -160,12 +168,7 @@
           `).join('')}
         `
         // 로드 후 스크롤 상태 초기 확인 (짧은 챕터 대비)
-        setTimeout(() => {
-          checkScroll()
-          if (!scrolledToBottom) {
-            document.getElementById('scrollHint').classList.remove('hidden')
-          }
-        }, 200)
+        setTimeout(checkScroll, 200)
       } catch (e) {
         document.getElementById('content').innerHTML =
           '<p class="text-red-500 text-center py-10">성경을 불러오지 못했습니다</p>'
@@ -175,7 +178,15 @@
     // ── 초기화 ───────────────────────────────────────────────────────────
     async function init() {
       const { data: user } = await sb.from('users').select('id').eq('nickname', nickname).maybeSingle()
-      if (user) userId = user.id
+      if (user) {
+        userId = user.id
+        const { data: rec } = await sb.from('records')
+          .select('completed').eq('user_id', userId).eq('plan_id', planId).maybeSingle()
+        if (rec?.completed) {
+          scrolledToBottom = true
+          document.getElementById('completeChk').checked = true
+        }
+      }
       await Promise.all([loadChapter(), loadAdjacentPlans()])
     }
 
