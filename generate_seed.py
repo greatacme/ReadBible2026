@@ -19,7 +19,7 @@ BOOKS = [
     ("요한3서", 1), ("유다서", 1), ("요한계시록", 22),
 ]
 
-def generate(start=date(2026, 4, 1), total_days=275):
+def generate(start=date(2026, 3, 1), total_days=306):
     chapters = [(b, ch) for b, n in BOOKS for ch in range(1, n + 1)]
     total = len(chapters)
     rows, idx, order = [], 0, 1
