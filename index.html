@@ -59,15 +59,17 @@
     const groupCode = new URLSearchParams(location.search).get('group')
     const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}` : ''
 
-    if (!groupCode) {
-      document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!groupCode) {
         document.getElementById('nicknameInput').disabled = true
         document.querySelector('button[onclick="goRecord()"]').disabled = true
         const errEl = document.getElementById('errMsg')
         errEl.textContent = '그룹 코드가 필요합니다. URL에 ?group=그룹명 을 추가해주세요.'
         errEl.classList.remove('hidden')
-      })
-    }
+      } else {
+        document.getElementById('siteSubtitle').textContent = `그룹: ${groupCode}`
+      }
+    })
 
     let chartInstance = null
 
