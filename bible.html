@@ -74,13 +74,10 @@
     const chapterNo  = Number(p.get('chapter_no'))
     const sortOrder  = Number(p.get('sort_order'))
 
-    const group = p.get('group') === '2' ? '2' : '1'
-    const T = group === '2'
-      ? { users: 'users2', plans: 'plans2', records: 'records2' }
-      : { users: 'users',  plans: 'plans',  records: 'records'  }
-    const groupParam = group === '2' ? '&group=2' : ''
+    const groupCode = p.get('group')
+    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}` : ''
 
-    if (!nickname || !book || !chapterNo) location.href = 'index.html'
+    if (!nickname || !book || !chapterNo || !groupCode) location.href = 'index.html'
 
     let userId           = null
     let scrolledToBottom = false
@@ -118,7 +115,7 @@
     // ── 읽기 완료 토글 저장 ──────────────────────────────────────────────
     async function toggleComplete(checked) {
       if (!userId || !planId) return
-      await sb.from(T.records).upsert(
+      await sb.from('records').upsert(
         { user_id: userId, plan_id: planId, completed: checked, updated_at: new Date().toISOString() },
         { onConflict: 'user_id,plan_id' }
       )
@@ -135,8 +132,8 @@
     // ── 인접 계획 조회 ───────────────────────────────────────────────────
     async function loadAdjacentPlans() {
       const [prevRes, nextRes] = await Promise.all([
-        sb.from(T.plans).select('id,book,chapter_no,sort_order').eq('sort_order', sortOrder - 1).maybeSingle(),
-        sb.from(T.plans).select('id,book,chapter_no,sort_order').eq('sort_order', sortOrder + 1).maybeSingle()
+        sb.from('plans').select('id,book,chapter_no,sort_order').eq('sort_order', sortOrder - 1).maybeSingle(),
+        sb.from('plans').select('id,book,chapter_no,sort_order').eq('sort_order', sortOrder + 1).maybeSingle()
       ])
       prevPlan = prevRes.data
       nextPlan = nextRes.data
@@ -180,10 +177,10 @@
 
     // ── 초기화 ───────────────────────────────────────────────────────────
     async function init() {
-      const { data: user } = await sb.from(T.users).select('id').eq('nickname', nickname).maybeSingle()
+      const { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (user) {
         userId = user.id
-        const { data: rec } = await sb.from(T.records)
+        const { data: rec } = await sb.from('records')
           .select('completed').eq('user_id', userId).eq('plan_id', planId).maybeSingle()
         if (rec?.completed) {
           scrolledToBottom = true

@@ -19,7 +19,7 @@
 <body class="bg-slate-100 min-h-screen">
 
   <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
-    <button onclick="location.href='index.html' + (group === '2' ? '?group=2' : '')" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
+    <button onclick="location.href='index.html?group=' + encodeURIComponent(groupCode)" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
     <div class="flex-1 min-w-0">
       <h1 id="userName" class="text-base font-bold truncate">성경통독 기록</h1>
       <p id="userRate" class="text-blue-300 text-xs"></p>
@@ -42,15 +42,11 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
-    const params   = new URLSearchParams(location.search)
-    const nickname = params.get('nickname')
-    if (!nickname) location.href = 'index.html'
-
-    const group = params.get('group') === '2' ? '2' : '1'
-    const T = group === '2'
-      ? { users: 'users2', plans: 'plans2', records: 'records2' }
-      : { users: 'users',  plans: 'plans',  records: 'records'  }
-    const groupParam = group === '2' ? '&group=2' : ''
+    const params    = new URLSearchParams(location.search)
+    const nickname  = params.get('nickname')
+    const groupCode = params.get('group')
+    if (!nickname || !groupCode) location.href = 'index.html'
+    const groupParam = `&group=${encodeURIComponent(groupCode)}`
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토']
     const today = new Date().toISOString().split('T')[0]
@@ -174,7 +170,7 @@
         label.classList.toggle('text-gray-800', !completed)
       }
 
-      await sb.from(T.records).upsert(
+      await sb.from('records').upsert(
         { user_id: userId, plan_id: planId, completed, updated_at: new Date().toISOString() },
         { onConflict: 'user_id,plan_id' }
       )
@@ -188,19 +184,19 @@
     // ── 데이터 로드 ───────────────────────────────────────────────────
     async function loadRecords() {
       // 1. 사용자 조회 또는 생성
-      let { data: user } = await sb.from(T.users).select('id').eq('nickname', nickname).maybeSingle()
+      let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (!user) {
-        const { data: newUser, error } = await sb.from(T.users).insert({ nickname }).select('id').single()
+        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode }).select('id').single()
         if (error) { location.href = 'index.html'; return }
         user = newUser
       }
       userId = user.id
 
       // 2. 전체 계획 조회 (최대 1500행)
-      const { data: plans } = await sb.from(T.plans).select('id, date, book, chapter_no, sort_order').order('sort_order').limit(1500)
+      const { data: plans } = await sb.from('plans').select('id, date, book, chapter_no, sort_order').order('sort_order').limit(1500)
 
       // 3. 이 사용자의 완료 기록 조회
-      const { data: records } = await sb.from(T.records).select('plan_id, completed').eq('user_id', userId)
+      const { data: records } = await sb.from('records').select('plan_id, completed').eq('user_id', userId)
       const recMap = Object.fromEntries((records || []).map(r => [r.plan_id, r.completed]))
 
       // 4. 병합

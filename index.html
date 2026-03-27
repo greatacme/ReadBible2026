@@ -56,22 +56,24 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
-    const group = new URLSearchParams(location.search).get('group') === '2' ? '2' : '1'
-    const T = group === '2'
-      ? { users: 'users2', plans: 'plans2', records: 'records2', stats: 'get_stats2' }
-      : { users: 'users',  plans: 'plans',  records: 'records',  stats: 'get_stats'  }
-    const groupParam = group === '2' ? '&group=2' : ''
+    const groupCode = new URLSearchParams(location.search).get('group')
+    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}` : ''
 
-    if (group === '2') {
-      document.getElementById('siteTitle').textContent = '✝ 2026 Luce Chapel Bible Reading'
-      document.getElementById('siteSubtitle').textContent = 'Reading the Word of God in Faith'
-      document.title = '2026 Luce Chapel Bible Reading'
+    if (!groupCode) {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('nicknameInput').disabled = true
+        document.querySelector('button[onclick="goRecord()"]').disabled = true
+        const errEl = document.getElementById('errMsg')
+        errEl.textContent = '그룹 코드가 필요합니다. URL에 ?group=그룹명 을 추가해주세요.'
+        errEl.classList.remove('hidden')
+      })
     }
 
     let chartInstance = null
 
     async function loadStats() {
-      const { data, error } = await sb.rpc(T.stats)
+      if (!groupCode) return
+      const { data, error } = await sb.rpc('get_stats', { p_group_code: groupCode })
       document.getElementById('chartLoading').classList.add('hidden')
 
       if (error || !data || data.length === 0) {
@@ -144,9 +146,9 @@
       errEl.classList.add('hidden')
 
       // 기존 사용자 조회 또는 신규 등록
-      let { data: user } = await sb.from(T.users).select('id').eq('nickname', nickname).maybeSingle()
+      let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (!user) {
-        const { data: newUser, error } = await sb.from(T.users).insert({ nickname }).select('id').single()
+        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode }).select('id').single()
         if (error) {
           errEl.textContent = '등록 중 오류가 발생했습니다'
           errEl.classList.remove('hidden')
