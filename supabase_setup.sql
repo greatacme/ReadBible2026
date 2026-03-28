@@ -6,8 +6,10 @@
 -- 1. 테이블 생성
 CREATE TABLE public.users (
   id         SERIAL PRIMARY KEY,
-  nickname   TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  nickname   TEXT NOT NULL,
+  group_code TEXT NOT NULL DEFAULT '0',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT users_nickname_group_unique UNIQUE (nickname, group_code)
 );
 
 CREATE TABLE public.plans (
@@ -38,13 +40,13 @@ ALTER TABLE public.users   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plans   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.records ENABLE ROW LEVEL SECURITY;
 
--- 4. 정책 (10명 소규모 신뢰 그룹 → 전체 공개)
+-- 4. 정책 (소규모 신뢰 그룹 → 전체 공개)
 CREATE POLICY "allow_all" ON public.users   FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON public.plans   FOR ALL USING (true);
 CREATE POLICY "allow_all" ON public.records FOR ALL USING (true) WITH CHECK (true);
 
--- 5. 완료율 통계 RPC
-CREATE OR REPLACE FUNCTION get_stats()
+-- 5. 완료율 통계 RPC (그룹 코드로 필터링)
+CREATE OR REPLACE FUNCTION get_stats(p_group_code TEXT)
 RETURNS TABLE(nickname TEXT, completed BIGINT, planned BIGINT, rate NUMERIC)
 LANGUAGE sql SECURITY DEFINER
 AS $$
@@ -56,6 +58,7 @@ AS $$
            COUNT(r.id) FILTER (WHERE r.completed = true) AS done
     FROM public.users u
     LEFT JOIN public.records r ON r.user_id = u.id
+    WHERE u.group_code = p_group_code
     GROUP BY u.id, u.nickname
   )
   SELECT ud.nickname,
