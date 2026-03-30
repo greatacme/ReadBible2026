@@ -178,11 +178,13 @@
 
     // ── 초기화 ───────────────────────────────────────────────────────────
     async function init() {
-      // 그룹의 plan_set_id 조회 (없으면 1 기본값)
-      const { data: grp } = await sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle()
+      // groups + user 조회 병렬
+      const [{ data: grp }, { data: user }] = await Promise.all([
+        sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
+        sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+      ])
       planSetId = grp?.plan_set_id ?? 1
 
-      const { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (user) {
         userId = user.id
         const { data: rec } = await sb.from('records')

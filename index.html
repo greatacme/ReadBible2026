@@ -77,13 +77,14 @@
     async function loadStats() {
       if (!groupCode) return
 
-      // 등록된 그룹이면 실제 plan_set_id 로 subtitle 갱신
-      const { data: grp } = await sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle()
+      // groups 조회 + get_stats 병렬 실행
+      const [{ data: grp }, { data, error }] = await Promise.all([
+        sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
+        sb.rpc('get_stats', { p_group_code: groupCode })
+      ])
       if (grp) {
         document.getElementById('siteSubtitle').textContent = `그룹: ${groupCode} · 플랜: ${grp.plan_set_id}`
       }
-
-      const { data, error } = await sb.rpc('get_stats', { p_group_code: groupCode })
       document.getElementById('chartLoading').classList.add('hidden')
 
       if (error || !data || data.length === 0) {
