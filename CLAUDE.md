@@ -25,14 +25,17 @@ generate_seed.py      # seed_plans.sql 재생성 스크립트
 ## DB 스키마
 
 ```sql
+groups  (group_code TEXT PK, plan_set_id INT DEFAULT 1, created_at)
 users   (id SERIAL PK, nickname TEXT, group_code TEXT, created_at)
-plans   (id SERIAL PK, date DATE, book TEXT, chapter_no INT, sort_order INT)
+plans   (id SERIAL PK, plan_set_id INT DEFAULT 1, date DATE, book TEXT, chapter_no INT, sort_order INT)
 records (id SERIAL PK, user_id INT → users.id, plan_id INT → plans.id,
          completed BOOLEAN, updated_at TIMESTAMPTZ)
 ```
 
+- `groups` — group_code 를 plan_set_id 에 매핑. 최초 사용자 등록 시 upsert (이미 있으면 plan_set_id 유지)
 - `users.nickname` + `users.group_code` 복합 UNIQUE → 그룹 내 닉네임 중복 불가
-- `plans` 는 모든 그룹 공용 (성경 읽기 일정 동일)
+- `plans.plan_set_id` — 읽기 플랜 구분. 1 = 기본 플랜, 2 = 두 번째 플랜(plans2 데이터)
+- `plans.sort_order` — plan_set_id 내에서만 고유하면 됨 (인접 장 탐색에 사용)
 - `records` 는 users.id 를 통해 그룹 격리됨
 - RLS 정책: 전체 허용 (신뢰 그룹 대상 서비스)
 
@@ -41,7 +44,7 @@ records (id SERIAL PK, user_id INT → users.id, plan_id INT → plans.id,
 ```sql
 get_stats(p_group_code TEXT)
   → (nickname, completed, planned, rate)
-  -- 해당 그룹 사용자만 필터링해서 완독률 반환
+  -- groups 테이블에서 plan_set_id 조회 (없으면 1), 해당 plan_set 기준으로 완독률 계산
 ```
 
 ---
@@ -51,10 +54,13 @@ get_stats(p_group_code TEXT)
 - URL 파라미터 `?group=그룹코드` 필수
 - 없으면 index.html에서 안내 메시지 표시 + 입력 비활성화
 - record.html / bible.html은 그룹 없으면 index.html 리디렉션
-- 그룹은 사전 등록 불필요 — 첫 사용자가 해당 그룹 코드로 가입하면 자동 생성
+- 그룹은 사전 등록 불필요 — 첫 사용자 등록 시 groups 테이블에 upsert (plan_set_id 결정)
+- `?plan=N` — 그룹 최초 생성 시만 유효. 이미 존재하는 그룹은 기존 plan_set_id 유지
+- plan 파라미터 생략 시 plan_set_id = 1 (기본 플랜)
 
 ```
-index.html?group=제1청장년
+index.html?group=제1청장년           ← plan_set_id=1 (기본)
+index.html?group=루체채플&plan=2     ← plan_set_id=2 (첫 진입 시에만 적용)
 record.html?nickname=홍길동&group=제1청장년
 bible.html?nickname=홍길동&plan_id=1&book=창세기&chapter_no=1&sort_order=1&group=제1청장년
 ```
@@ -86,9 +92,12 @@ sb.rpc('get_stats', { p_group_code: groupCode })
 ## Supabase 설정 순서
 
 1. `supabase_setup.sql` 실행 (최초 1회)
-2. `seed_plans.sql` 실행 (1,189장 데이터)
+2. `seed_plans.sql` 실행 (1,189장 데이터, plan_set_id=1)
 3. `supabase_migration.sql` 실행 (group_code 컬럼 추가)
-4. (선택) `seed_test_groups.sql` 실행 (테스트 데이터)
+4. `supabase_setup2.sql` 실행 (plans2 테이블 생성)
+5. `seed_plans2.sql` 실행 (plan_set_id=2 용 데이터)
+6. `supabase_migration_plan_set.sql` 실행 (groups 테이블, plans.plan_set_id, plans2→plans 이관, RPC 수정)
+7. (선택) `seed_test_groups.sql` 실행 (테스트 데이터)
 
 ---
 
