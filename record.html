@@ -21,14 +21,8 @@
   <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
     <button onclick="location.href='index.html?group=' + encodeURIComponent(groupCode)" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2">
-        <input id="userNameInput" type="text" value=""
-          class="text-base font-bold bg-blue-800 text-white border border-blue-600 rounded px-2 py-0.5 w-32 focus:outline-none focus:border-blue-300"/>
-        <span class="text-base font-bold whitespace-nowrap">님의 성경통독</span>
-        <button onclick="renameUser()" class="text-xs bg-blue-700 hover:bg-blue-500 px-2 py-0.5 rounded whitespace-nowrap">닉네임 수정</button>
-        <button onclick="deleteUser()" class="text-xs bg-red-700 hover:bg-red-500 px-2 py-0.5 rounded whitespace-nowrap">사용자 삭제</button>
-      </div>
-      <p id="userRate" class="text-blue-300 text-xs mt-0.5"></p>
+      <h1 id="userName" class="text-base font-bold truncate">성경통독 기록</h1>
+      <p id="userRate" class="text-blue-300 text-xs"></p>
     </div>
     <div id="saveIndicator" class="text-xs text-green-300 opacity-0 transition-opacity duration-500 whitespace-nowrap">
       저장됨 ✓
@@ -221,38 +215,10 @@
         completed:  recMap[p.id] ?? false,
       }))
 
-      document.getElementById('userNameInput').value = nickname
+      document.getElementById('userName').textContent = `${nickname}님의 성경통독`
       updateRateDisplay()
       render()
       focusFirstUnchecked()
-    }
-
-    // ── 사용자 이름 수정 ─────────────────────────────────────────────
-    async function renameUser() {
-      const newName = document.getElementById('userNameInput').value.trim()
-      if (!newName) { alert('닉네임을 입력해주세요.'); return }
-      if (newName === nickname) return
-      if (!confirm(`닉네임을 "${newName}"으로 변경할까요?`)) return
-
-      const { error } = await sb.from('users')
-        .update({ nickname: newName })
-        .eq('id', userId)
-      if (error) { alert('수정 실패: ' + error.message); return }
-
-      const url = new URL(location.href)
-      url.searchParams.set('nickname', newName)
-      location.href = url.toString()
-    }
-
-    // ── 사용자 삭제 ───────────────────────────────────────────────────
-    async function deleteUser() {
-      if (!confirm(`"${nickname}"님의 모든 기록과 계정을 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return
-
-      await sb.from('records').delete().eq('user_id', userId)
-      const { error } = await sb.from('users').delete().eq('id', userId)
-      if (error) { alert('삭제 실패: ' + error.message); return }
-
-      location.href = 'index.html?group=' + encodeURIComponent(groupCode)
     }
 
     loadRecords()
