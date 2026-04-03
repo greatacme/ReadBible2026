@@ -196,7 +196,7 @@
       }
       renderVerses(verses.map(v => ({
         verse: v.verse,
-        text: v.text.replace(/[a-z](?=[가-힣])/g, '').replace(/\\/g, '<br>')
+        text: v.text.replace(/[a-z](?=[가-힣])/g, '').replace(/＼/g, '<br>')
       })))
     }
 
