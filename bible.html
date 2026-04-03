@@ -194,7 +194,10 @@
           '<p class="text-red-500 text-center py-10">성경을 불러오지 못했습니다</p>'
         return
       }
-      renderVerses(verses)
+      renderVerses(verses.map(v => ({
+        verse: v.verse,
+        text: v.text.replace(/[a-z](?=[가-힣])/g, '').replace(/\\/g, '<br>')
+      })))
     }
 
     // ── 절 목록 렌더링 ───────────────────────────────────────────────────
