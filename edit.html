@@ -51,8 +51,10 @@
 
       <div>
         <label class="block text-sm font-semibold text-gray-600 mb-1">그룹 코드</label>
-        <input id="inputGroup" type="text"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+        <select id="inputGroup"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">불러오는 중...</option>
+        </select>
       </div>
 
       <p id="errorMsg" class="text-red-500 text-xs hidden"></p>
@@ -84,9 +86,20 @@
     if (!nickname || !groupCode) location.href = 'index.html'
 
     document.getElementById('inputNickname').value = nickname
-    document.getElementById('inputGroup').value    = groupCode
     document.getElementById('backBtn').onclick = () =>
       location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}`
+
+    // 그룹 목록 로드
+    async function loadGroups() {
+      const { data: groups } = await sb.from('groups').select('group_code')
+      if (!groups) return
+      groups.sort((a, b) => a.group_code.localeCompare(b.group_code, 'ko', { numeric: true }))
+      const sel = document.getElementById('inputGroup')
+      sel.innerHTML = groups.map(g =>
+        `<option value="${g.group_code}" ${g.group_code === groupCode ? 'selected' : ''}>${g.group_code}</option>`
+      ).join('')
+    }
+    loadGroups()
 
     function showError(msg) {
       const el = document.getElementById('errorMsg')
@@ -197,8 +210,6 @@
           }
         }
 
-        // 새 그룹이 없으면 생성
-        await sb.from('groups').upsert({ group_code: newGroup }, { onConflict: 'group_code', ignoreDuplicates: true })
       }
 
       const { error } = await sb.from('users')
