@@ -40,9 +40,17 @@
       <p id="errMsg" class="text-red-500 text-xs mt-2 hidden"></p>
     </section>
 
-    <!-- TOP 10 차트 -->
+    <!-- TOP 차트 -->
     <section class="bg-white rounded-2xl shadow p-5">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">🏆 완독률 TOP</h2>
+      <div class="flex items-center gap-2 mb-4">
+        <h2 class="text-base font-semibold text-gray-700">🏆 완독률 TOP</h2>
+        <select id="topCount" onchange="onTopCountChange()"
+          class="border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </div>
       <canvas id="chart" class="hidden"></canvas>
       <p id="chartEmpty" class="text-gray-400 text-sm text-center py-4 hidden">아직 참여자가 없습니다</p>
       <p id="chartLoading" class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
@@ -83,11 +91,11 @@
     })
 
     let chartInstance = null
+    let allStats = []
 
     async function loadStats() {
       if (!groupCode) return
 
-      // groups 조회 + get_stats 병렬 실행
       const [{ data: grp }, { data, error }] = await Promise.all([
         sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
         sb.rpc('get_stats', { p_group_code: groupCode })
@@ -103,14 +111,23 @@
         return
       }
 
-      renderChart(data.slice(0, 10))
-      renderUserList(data)
+      allStats = data
+      const topN = parseInt(document.getElementById('topCount').value)
+      renderChart(allStats.slice(0, topN))
+      renderUserList(allStats)
+    }
+
+    function onTopCountChange() {
+      if (!allStats.length) return
+      const topN = parseInt(document.getElementById('topCount').value)
+      renderChart(allStats.slice(0, topN))
     }
 
     function renderChart(data) {
       const canvas = document.getElementById('chart')
       canvas.classList.remove('hidden')
       const maxVal = Math.max(100, ...data.map(d => Number(d.rate)))
+      const fontSize = data.length <= 3 ? 14 : data.length <= 5 ? 11 : 9
       if (chartInstance) chartInstance.destroy()
       chartInstance = new Chart(canvas.getContext('2d'), {
         type: 'bar',
@@ -130,7 +147,7 @@
           plugins: { legend: { display: false } },
           scales: {
             x: { beginAtZero: true, max: maxVal, ticks: { callback: v => v + '%' } },
-            y: { ticks: { autoSkip: false, font: { size: 10 } } }
+            y: { ticks: { autoSkip: false, font: { size: fontSize } } }
           }
         }
       })
