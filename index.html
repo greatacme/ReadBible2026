@@ -91,9 +91,8 @@
         sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
         sb.rpc('get_stats', { p_group_code: groupCode })
       ])
-      if (grp) {
-        document.getElementById('siteSubtitle').textContent = `Group: ${groupCode} · Plan: ${grp.plan_set_id}`
-      }
+      if (!grp) { location.replace('home.html'); return }
+      document.getElementById('siteSubtitle').textContent = `Group: ${groupCode} · Plan: ${grp.plan_set_id}`
       document.getElementById('chartLoading').classList.add('hidden')
 
       if (error || !data || data.length === 0) {
@@ -164,12 +163,6 @@
         return
       }
       errEl.classList.add('hidden')
-
-      // 그룹 등록 (최초 1회만 plan_set_id 저장, 이미 있으면 유지)
-      await sb.from('groups').upsert(
-        { group_code: groupCode, plan_set_id: planSetId },
-        { onConflict: 'group_code', ignoreDuplicates: true }
-      )
 
       // 기존 사용자 조회 또는 신규 등록
       let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
