@@ -19,6 +19,7 @@ AS $$
   user_done AS (
     SELECT u.nickname,
            u.created_at,
+           MIN(r.updated_at) AS first_record_at,
            COUNT(r.id) FILTER (WHERE r.completed = true) AS done
     FROM public.users u
     LEFT JOIN public.records r ON r.user_id = u.id
@@ -33,5 +34,5 @@ AS $$
               ELSE 0
          END AS rate
   FROM user_done ud, planned_cnt pc
-  ORDER BY rate DESC, ud.created_at ASC;
+  ORDER BY rate DESC, COALESCE(ud.first_record_at, ud.created_at) ASC;
 $$;
