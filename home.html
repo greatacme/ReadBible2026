@@ -65,7 +65,10 @@
     )
 
     async function loadGroups() {
-      const { data: groups } = await sb.from('groups').select('group_code').order('group_code')
+      const { data: groups } = await sb.from('groups').select('group_code')
+      if (groups) groups.sort((a, b) =>
+        a.group_code.localeCompare(b.group_code, 'ko', { numeric: true })
+      )
       const listEl = document.getElementById('groupList')
 
       if (!groups || groups.length === 0) {
