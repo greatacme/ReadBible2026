@@ -32,9 +32,16 @@
     </div>
   </main>
 
-  <!-- 토스트 팝업 -->
-  <div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-5 py-3 rounded-xl shadow-lg z-50 whitespace-nowrap">
-    그룹 링크가 복사되었습니다 ✓
+  <!-- 복사 완료 팝업 -->
+  <div id="copyModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full space-y-4 text-center">
+      <p class="text-gray-800 font-semibold">그룹 링크가 복사되었습니다.</p>
+      <p class="text-gray-500 text-sm">필요한 곳에 공유하세요.</p>
+      <button id="copyModalOkBtn"
+        class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+        확인
+      </button>
+    </div>
   </div>
 
   <script>
@@ -89,8 +96,8 @@
       const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(newGroup)}`
       await navigator.clipboard.writeText(url)
 
-      document.getElementById('toast').classList.remove('hidden')
-      setTimeout(() => { location.href = url }, 1500)
+      document.getElementById('copyModal').classList.remove('hidden')
+      document.getElementById('copyModalOkBtn').onclick = () => { location.href = url }
     }
 
     document.getElementById('inputGroup').addEventListener('keydown', e => {
