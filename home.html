@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2026 성경통독 — 그룹 선택</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+  <header class="bg-blue-900 text-white py-6 text-center shadow-lg">
+    <h1 class="text-2xl font-bold tracking-wide">✝ 2026년 성경통독</h1>
+    <p class="text-blue-300 text-base mt-1">그룹을 선택하세요</p>
+  </header>
+
+  <!-- 신규 그룹 생성 모달 -->
+  <div id="createModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full space-y-4">
+      <p class="font-semibold text-gray-800">신규 그룹 생성</p>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">그룹 코드</label>
+        <input id="newGroupCode" type="text" placeholder="예) 제2청장년"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">플랜</label>
+        <select id="newPlanSetId"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="1">Plan 1</option>
+          <option value="2">Plan 2</option>
+          <option value="3">Plan 3</option>
+        </select>
+      </div>
+      <p id="createError" class="text-red-500 text-xs hidden"></p>
+      <div class="flex gap-2">
+        <button id="createCancelBtn"
+          class="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm hover:bg-gray-50 transition">
+          취소
+        </button>
+        <button id="createConfirmBtn"
+          class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg text-sm transition">
+          생성
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-2xl mx-auto p-4 space-y-4">
+    <div id="groupList">
+      <p class="text-gray-400 text-sm text-center py-10">불러오는 중...</p>
+    </div>
+    <button onclick="openCreateModal()"
+      class="w-full bg-white hover:bg-blue-700 hover:text-white text-blue-700 border border-blue-300
+             font-semibold py-2.5 rounded-xl shadow text-sm transition">
+      + 신규 그룹 생성
+    </button>
+  </main>
+
+  <script>
+    const { createClient } = supabase
+    const sb = createClient(
+      'https://wwnohpprdjnvdjccednr.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
+    )
+
+    async function loadGroups() {
+      const { data: groups } = await sb.from('groups').select('group_code').order('group_code')
+      const listEl = document.getElementById('groupList')
+
+      if (!groups || groups.length === 0) {
+        listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">등록된 그룹이 없습니다</p>'
+        return
+      }
+
+      listEl.innerHTML = `
+        <div class="flex flex-wrap gap-2">
+          ${groups.map(g => `
+            <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}'"
+              class="bg-white hover:bg-blue-700 hover:text-white text-gray-800 font-semibold
+                     px-4 py-2 rounded-xl shadow text-sm transition">
+              ${g.group_code}
+            </button>
+          `).join('')}
+        </div>`
+    }
+
+    function openCreateModal() {
+      document.getElementById('newGroupCode').value = ''
+      document.getElementById('newPlanSetId').value = '1'
+      document.getElementById('createError').classList.add('hidden')
+      document.getElementById('createModal').classList.remove('hidden')
+      document.getElementById('newGroupCode').focus()
+    }
+
+    document.getElementById('createCancelBtn').onclick = () =>
+      document.getElementById('createModal').classList.add('hidden')
+
+    document.getElementById('createConfirmBtn').onclick = async () => {
+      const groupCode  = document.getElementById('newGroupCode').value.trim()
+      const planSetId  = parseInt(document.getElementById('newPlanSetId').value)
+      const errEl      = document.getElementById('createError')
+
+      if (!groupCode) {
+        errEl.textContent = '그룹 코드를 입력해주세요.'
+        errEl.classList.remove('hidden')
+        return
+      }
+
+      // 중복 확인
+      const { data: existing } = await sb.from('groups').select('group_code')
+        .eq('group_code', groupCode).maybeSingle()
+      if (existing) {
+        errEl.textContent = '이미 존재하는 그룹 코드입니다.'
+        errEl.classList.remove('hidden')
+        return
+      }
+
+      const { error } = await sb.from('groups').insert({ group_code: groupCode, plan_set_id: planSetId })
+      if (error) {
+        errEl.textContent = '생성 중 오류가 발생했습니다.'
+        errEl.classList.remove('hidden')
+        return
+      }
+
+      location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+    }
+
+    document.getElementById('newGroupCode').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('createConfirmBtn').click()
+    })
+
+    loadGroups()
+  </script>
+</body>
+</html>
