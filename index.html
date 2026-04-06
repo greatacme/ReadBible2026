@@ -165,6 +165,7 @@
       // 기존 사용자 조회 또는 신규 등록
       let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (!user) {
+        if (!confirm(`'${nickname}'(으)로 신규 등록하시겠습니까?`)) return
         const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode }).select('id').single()
         if (error) {
           errEl.textContent = '등록 중 오류가 발생했습니다'
