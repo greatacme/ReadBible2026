@@ -74,7 +74,7 @@
         location.replace('home.html')
         return
       } else {
-        document.getElementById('siteSubtitle').textContent = `group:${groupCode}(${planSetId})`
+        document.getElementById('siteSubtitle').textContent = `group:${groupCode}`
         const editBtn = document.getElementById('groupEditBtn')
         editBtn.href = `group-edit.html?group=${encodeURIComponent(groupCode)}`
         editBtn.classList.remove('hidden')
@@ -93,7 +93,7 @@
         sb.rpc('get_stats', { p_group_code: groupCode })
       ])
       if (!grp) { location.replace('home.html'); return }
-      document.getElementById('siteSubtitle').textContent = `group:${groupCode}(${grp.plan_set_id})`
+      document.getElementById('siteSubtitle').textContent = `group:${groupCode}`
       document.getElementById('chartLoading').classList.add('hidden')
 
       if (error || !data || data.length === 0) {
