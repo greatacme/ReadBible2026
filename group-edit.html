@@ -29,6 +29,13 @@
         class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg text-sm transition">
         저장
       </button>
+
+      <hr class="border-gray-200"/>
+
+      <button id="deleteBtn"
+        class="w-full bg-white hover:bg-red-50 text-red-500 border border-red-300 font-semibold py-2.5 rounded-lg text-sm transition">
+        그룹 삭제
+      </button>
     </div>
   </main>
 
@@ -103,6 +110,23 @@
     document.getElementById('inputGroup').addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('saveBtn').click()
     })
+
+    // ── 그룹 삭제 ─────────────────────────────────────────────────────────
+    document.getElementById('deleteBtn').onclick = async () => {
+      document.getElementById('errorMsg').classList.add('hidden')
+
+      // 소속 사용자 수 확인
+      const { data: users } = await sb.from('users').select('id').eq('group_code', groupCode)
+      if (users && users.length > 0) {
+        showError(`이 그룹에 ${users.length}명의 사용자가 있습니다. 모든 사용자를 다른 그룹으로 이동한 후 삭제해주세요.`)
+        return
+      }
+
+      if (!confirm(`'${groupCode}' 그룹을 삭제하시겠습니까?`)) return
+
+      await sb.from('groups').delete().eq('group_code', groupCode)
+      location.href = 'home.html'
+    }
   </script>
 </body>
 </html>
