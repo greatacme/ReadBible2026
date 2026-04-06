@@ -9,9 +9,15 @@
 </head>
 <body class="bg-slate-100 min-h-screen">
 
-  <header class="bg-blue-900 text-white py-6 text-center shadow-lg">
-    <h1 class="text-2xl font-bold tracking-wide">✝ 2026년 성경통독</h1>
-    <p class="text-blue-300 text-base mt-1">그룹을 선택하세요</p>
+  <header class="bg-blue-900 text-white py-6 shadow-lg">
+    <h1 class="text-2xl font-bold tracking-wide text-center">✝ 2026년 성경통독</h1>
+    <div class="flex items-center mt-1 px-4">
+      <div class="flex-1"></div>
+      <p class="text-blue-300 text-base">그룹을 선택하세요</p>
+      <div class="flex-1 flex justify-end">
+        <button onclick="openCreateModal()" class="text-blue-400 hover:text-white text-xs whitespace-nowrap">+ 신규 그룹</button>
+      </div>
+    </div>
   </header>
 
   <!-- 신규 그룹 생성 모달 -->
@@ -50,11 +56,6 @@
     <div id="groupList">
       <p class="text-gray-400 text-sm text-center py-10">불러오는 중...</p>
     </div>
-    <button onclick="openCreateModal()"
-      class="w-full bg-white hover:bg-blue-700 hover:text-white text-blue-700 border border-blue-300
-             font-semibold py-2.5 rounded-xl shadow text-sm transition">
-      + 신규 그룹 생성
-    </button>
   </main>
 
   <script>
