@@ -33,5 +33,5 @@ AS $$
               ELSE 0
          END AS rate
   FROM user_done ud, planned_cnt pc
-  ORDER BY rate DESC, ud.created_at DESC;
+  ORDER BY rate DESC, ud.created_at ASC;
 $$;
