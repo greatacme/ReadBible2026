@@ -14,7 +14,7 @@ AS $$
     SELECT COUNT(*) AS cnt
     FROM public.plans, grp
     WHERE public.plans.plan_set_id = grp.plan_set_id
-      AND public.plans.date <= CURRENT_DATE
+      AND public.plans.date <= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE
   ),
   user_done AS (
     SELECT u.nickname,
