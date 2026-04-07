@@ -14,6 +14,7 @@
     <div class="flex-1 min-w-0">
       <h1 id="chapterTitle" class="text-base font-bold truncate">성경 읽기</h1>
     </div>
+    <div id="planDate" class="text-xs text-blue-300 whitespace-nowrap"></div>
     <div id="saveIndicator" class="text-xs text-green-300 opacity-0 transition-opacity duration-500 whitespace-nowrap">
       저장됨 ✓
     </div>
@@ -147,6 +148,14 @@
     async function loadChapter() {
       document.getElementById('chapterTitle').textContent = `${book} ${chapterNo}장`
       document.title = `${book} ${chapterNo}장`
+
+      const { data: plan } = await sb.from('plans').select('date').eq('id', planId).maybeSingle()
+      if (plan?.date) {
+        const DAYS = ['일','월','화','수','목','금','토']
+        const d = new Date(plan.date + 'T00:00:00')
+        document.getElementById('planDate').textContent =
+          `${d.getMonth()+1}/${d.getDate()}(${DAYS[d.getDay()]})`
+      }
 
       if (versionId) {
         await loadChapterFromDB()
