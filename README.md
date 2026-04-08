@@ -8,9 +8,9 @@
 
 **https://greatacme.github.io/ReadBible2026/**
 
-접속 시 반드시 그룹 코드 포함:
+그룹 링크 형식:
 ```
-https://greatacme.github.io/ReadBible2026/?group=그룹코드
+https://greatacme.github.io/ReadBible2026/index.html?group=그룹코드
 ```
 
 ---
@@ -25,41 +25,57 @@ https://greatacme.github.io/ReadBible2026/?group=그룹코드
 ## 기능
 
 ### 그룹 시스템
+- 홈 화면(`home.html`)에서 그룹 목록 확인 및 신규 그룹 생성
 - URL의 `?group=그룹코드` 파라미터로 그룹 구분
-- 그룹 사전 등록 불필요 — 새 그룹 코드로 접속하면 자동 생성
 - 그룹 간 데이터 완전 격리 (리더보드, 진도 모두 그룹 내에서만 공유)
+- 그룹별 읽기 플랜 분리 (`plan_set_id` 1/2/3)
 
 ### 성경 읽기 계획
-- 2026년 4월 5일 ~ 12월 25일 (216일)
-- 창세기 ~ 요한계시록 **총 1,189장**을 일자별 배분 (하루 평균 4~5장)
-- 1장씩 개별 체크 가능
+- 2026년 1,189장 (창세기 ~ 요한계시록) 일자별 배분
+- 그룹별로 다른 플랜 적용 가능 (하루 평균 4~5장)
+- 장별 개별 체크 가능
 
 ### 읽기 실적 관리
-- 장별 체크박스 완료 표시 → **즉시 자동 저장**
+- 장별 체크박스 완료 표시 → 즉시 자동 저장
 - 완료율 = 오늘까지의 계획 장수 대비 완료 장수 (%)
-- 계획보다 앞서 읽으면 **100% 초과** 가능
+- 계획보다 앞서 읽으면 100% 초과 가능
 
 ### 사용자 관리
-- **암호 없이 별명으로 로그인** (최초 입력 시 자동 등록)
+- 암호 없이 별명으로 로그인 (최초 입력 시 자동 등록)
 - 같은 별명이어도 그룹이 다르면 별개 계정
+- 프로필 편집: 닉네임 변경, 그룹 이동 (기록 이전 포함), 계정 삭제
 
 ### 화면 구성
 
-**첫 화면** (`index.html?group=...`)
-- 해당 그룹 참여자 완료율 순위 목록
-- 완료율 TOP 10 가로 막대 그래프 (Chart.js)
-- 별명 입력 → "기록" 버튼으로 개인 기록 화면 이동
+**홈 화면** (`home.html`)
+- 전체 그룹 목록 (자연 정렬)
+- 신규 그룹 생성 (그룹명 + 플랜 선택)
+
+**그룹 메인** (`index.html?group=...`)
+- 참여자 완독률 순위 목록
+- 완독률 TOP N 가로 막대 그래프 (N: 3/5/10 선택)
+- 별명 입력 → 기록 버튼으로 개인 기록 화면 이동
 
 **기록 화면** (`record.html?nickname=...&group=...`)
 - 월별 접기/펼치기 구조
-- 첫 진입 시 최초 미완료 장이 속한 달 자동 펼침 + 해당 행 스크롤
-- 날짜별 그룹 표시 (완료된 날짜는 초록색)
+- 첫 진입 시 최초 미완료 장 자동 스크롤
+- 날짜별 장 목록, 완료 날짜는 초록색 표시
 - 장별 체크박스 → 체크 즉시 저장
 
 **성경 읽기 화면** (`bible.html?...&group=...`)
-- 장 본문 표시 (helloao.org API)
+- 장 본문 표시 (helloao.org API 또는 Supabase verse 테이블)
+- 헤더에 플랜 날짜(월/일(요일)) 표시
 - 끝까지 스크롤 시 자동 완료 체크
-- 이전 / 다음 장 이동
+- 이전/다음 장 이동
+
+**프로필 편집** (`edit.html?nickname=...&group=...`)
+- 닉네임 변경
+- 그룹 이동 (플랜이 다를 경우 기록 이전/삭제 선택)
+- 계정 삭제
+
+**그룹 편집** (`group-edit.html?group=...`)
+- 그룹명 변경 (저장 시 링크 자동 복사)
+- 그룹 삭제 (사용자 있을 시 차단)
 
 ---
 
@@ -79,9 +95,12 @@ https://greatacme.github.io/ReadBible2026/?group=그룹코드
 
 ```
 브라우저 (GitHub Pages)
-  index.html  ──┐
-  record.html ──┼── Supabase JS SDK (REST API) ── Supabase PostgreSQL
-  bible.html  ──┘
+  home.html       ──┐
+  index.html      ──┤
+  record.html     ──┼── Supabase JS SDK (REST API) ── Supabase PostgreSQL
+  bible.html      ──┤
+  edit.html       ──┤
+  group-edit.html ──┘
 ```
 
 별도 백엔드 서버 없이 브라우저에서 Supabase에 직접 접근.
@@ -91,15 +110,19 @@ https://greatacme.github.io/ReadBible2026/?group=그룹코드
 ## DB 구조
 
 ```sql
+groups  (group_code TEXT PK, plan_set_id INT, version_id INT, created_at)
 users   (id, nickname, group_code, created_at)
-plans   (id, date, book, chapter_no, sort_order)
+plans   (id, plan_set_id, date, book, chapter_no, sort_order)
 records (id, user_id, plan_id, completed, updated_at)
+book    (book_id, name_ko, ...)
+verse   (version_id, book_id, chapter, verse, text)
 ```
 
-- `users.nickname` + `users.group_code` 복합 UNIQUE → 그룹 내 닉네임 중복 불가
-- `plans` 는 모든 그룹 공용
-- `records` 는 `users.id` 를 통해 그룹별 격리
-- RPC `get_stats(p_group_code)` : 그룹 필터링된 완독률 반환
+- `groups.plan_set_id` — 그룹별 읽기 플랜 구분 (1/2/3)
+- `groups.version_id` — NULL이면 외부 API, 값이 있으면 내부 DB에서 본문 로드
+- `users.nickname` + `users.group_code` 복합 UNIQUE
+- `records`는 `users.id`를 통해 그룹별 격리
+- RPC `get_stats(p_group_code)` — 그룹 필터링된 완독률, KST 기준 날짜, 완료 시점순 정렬
 
 ---
 
@@ -108,19 +131,18 @@ records (id, user_id, plan_id, completed, updated_at)
 Supabase SQL Editor에서 순서대로 실행:
 
 ```
-1. supabase_setup.sql       테이블 / RLS / RPC 생성
-2. seed_plans.sql           1,189장 계획 데이터 입력
-3. supabase_migration.sql   그룹 기능 적용 (group_code 컬럼 추가)
+1. supabase_setup.sql                    테이블 / RLS / RPC 생성
+2. seed_plans.sql                        1,189장 계획 (plan_set_id=1)
+3. supabase_migration.sql                group_code 컬럼 추가
+4. supabase_migration_plan_set.sql       groups 테이블, plan_set_id, RPC 수정
+5. seed_plans2.sql                       1,189장 계획 (plan_set_id=2)
+6. seed_plans3.sql                       1,189장 계획 (plan_set_id=3)
+7. supabase_migration_get_stats_order.sql KST 날짜 + 완료 시점 정렬 적용
 ```
 
-테스트 데이터가 필요한 경우:
+테스트 데이터:
 ```
-4. seed_test_groups.sql     그룹별 샘플 사용자 및 완료 기록
-```
-
-seed_plans.sql 재생성:
-```bash
-python3 generate_seed.py
+seed_test_groups.sql    그룹별 샘플 사용자 및 완료 기록
 ```
 
 ---
@@ -130,6 +152,12 @@ python3 generate_seed.py
 1. 저장소 **Settings → Pages**
 2. Source: `Deploy from a branch` / Branch: `main` / Folder: `/ (root)`
 3. push 시 자동 배포
+
+---
+
+## 변경 이력
+
+[CHANGELOG.md](CHANGELOG.md) 참조
 
 ---
 
