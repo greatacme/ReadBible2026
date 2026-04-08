@@ -51,7 +51,7 @@
     const groupParam = `&group=${encodeURIComponent(groupCode)}`
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토']
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date())
 
     let userId     = null
     let allRecords = []   // { plan_id, date, book, chapter_no, completed }
