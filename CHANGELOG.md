@@ -7,6 +7,11 @@
 
 ---
 
+## ver.3.3.2026.0413
+- chore: 성경 버전 기본값을 개역한글(KJV)로 변경
+- chore: groups 테이블 version_id 사용 제거 (groups.version_id 컬럼 삭제 가능)
+- fix: 그룹 편집 화면에서 성경 버전 편집 기능 제거
+
 ## ver.3.2.2026.0413
 - feat: 사용자별 성경 버전 설정 기능 추가
   - edit.html: 프로필 편집 페이지에 성경 버전 선택 필드 추가 (KLB/KJV)
