@@ -82,7 +82,7 @@
 
     let userId           = null
     let planSetId        = 1
-    let versionId        = null
+    let bibleVerCd       = 'KLB'
     let scrolledToBottom = false
     let saveTimer        = null
     let prevPlan         = null
@@ -161,14 +161,11 @@
           `${d.getMonth()+1}/${d.getDate()}(${DAYS[d.getDay()]})`
       }
 
-      // version_id 분기:
-      // - 'KRV' 또는 null: helloao.org API (개역한글)
+      // bibleVerCd 분기:
       // - 'KLB': YouVersion API (현대인의 성경)
-      // - 그 외 숫자: Supabase verse 테이블
-      if (versionId === 'KLB') {
+      // - 'KJV': helloao.org API (개역한글)
+      if (bibleVerCd === 'KLB') {
         await loadChapterFromYouVersion()
-      } else if (versionId && versionId !== 'KRV') {
-        await loadChapterFromDB()
       } else {
         await loadChapterFromAPI()
       }
@@ -312,14 +309,14 @@
     async function init() {
       // groups + user 조회 병렬
       const [{ data: grp }, { data: user }] = await Promise.all([
-        sb.from('groups').select('plan_set_id, version_id').eq('group_code', groupCode).maybeSingle(),
-        sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+        sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
+        sb.from('users').select('id, bible_ver_cd').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       ])
       planSetId = grp?.plan_set_id ?? 1
-      versionId = grp?.version_id ?? null
 
       if (user) {
         userId = user.id
+        bibleVerCd = user.bible_ver_cd || 'KLB'
         const { data: rec } = await sb.from('records')
           .select('completed').eq('user_id', userId).eq('plan_id', planId).maybeSingle()
         if (rec?.completed) {

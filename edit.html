@@ -57,6 +57,15 @@
         </select>
       </div>
 
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-1">성경 버전</label>
+        <select id="inputBibleVer"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="KLB">현대인의 성경 (KLB)</option>
+          <option value="KJV">개역한글 (KJV)</option>
+        </select>
+      </div>
+
       <p id="errorMsg" class="text-red-500 text-xs hidden"></p>
 
       <button id="saveBtn"
@@ -88,6 +97,18 @@
     document.getElementById('inputNickname').value = nickname
     document.getElementById('backBtn').onclick = () =>
       location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}`
+
+    // 사용자 정보 로드 (성경 버전 포함)
+    async function loadUser() {
+      const { data: user } = await sb.from('users').select('bible_ver_cd')
+        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+      if (user?.bible_ver_cd) {
+        document.getElementById('inputBibleVer').value = user.bible_ver_cd
+      } else {
+        document.getElementById('inputBibleVer').value = 'KLB'
+      }
+    }
+    loadUser()
 
     // 그룹 목록 로드
     async function loadGroups() {
@@ -171,6 +192,7 @@
       hideError()
       const newNickname = document.getElementById('inputNickname').value.trim()
       const newGroup    = document.getElementById('inputGroup').value.trim()
+      const newBibleVer = document.getElementById('inputBibleVer').value.trim()
 
       if (!newNickname) { showError('닉네임을 입력해주세요.'); return }
       if (!newGroup)    { showError('그룹 코드를 입력해주세요.'); return }
@@ -213,7 +235,7 @@
       }
 
       const { error } = await sb.from('users')
-        .update({ nickname: newNickname, group_code: newGroup })
+        .update({ nickname: newNickname, group_code: newGroup, bible_ver_cd: newBibleVer })
         .eq('id', user.id)
       if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
