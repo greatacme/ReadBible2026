@@ -107,14 +107,28 @@ sb.rpc('get_stats', { p_group_code: groupCode })
 
 bible.html은 그룹의 `version_id`에 따라 본문 소스를 분기한다:
 
-- `version_id = null` → helloao.org API (`/api/kor_old/{BOOK_CODE}/{chapter}.json`)
-- `version_id = N` → Supabase `verse` 테이블 (book_id + chapter + version_id 필터)
+- `version_id = null` → helloao.org API (`/api/kor_old/{BOOK_CODE}/{chapter}.json`) [개역한글]
+- `version_id = 'KLB'` → YouVersion Platform API (Bible ID 86, Supabase Edge Functions 프록시)
+- `version_id = N` (숫자) → Supabase `verse` 테이블 (book_id + chapter + version_id 필터)
+
+### KLB(Korean Living Bible) 설정
+
+그룹의 `version_id = 'KLB'` 설정 시, YouVersion Platform API에서 KLB 본문을 로드합니다.
+
+```sql
+UPDATE groups SET version_id = 'KLB' WHERE group_code = '그룹코드';
+```
+
+**요구사항:**
+- YouVersion Platform API Key: Biblica에 API 접근 권한 확인 필요
+- Supabase Edge Functions: `youversion-proxy` 함수 배포 필요 (TypeScript)
+- 로컬 개발: `youversion-proxy.js` 로컬 프록시 서버 사용 가능
 
 ---
 
 ## 버전 관리
 
-- 체계: `ver.major.minor.yyyy.mmdd` (예: ver.2.9.2026.0408)
+- 체계: `ver.major.minor.yyyy.mmdd` (예: ver.3.1.2026.0413)
 - major: 사용자 명시 요청 시만 변경
 - minor: 기능 추가/개선 배포마다 +1 (오류 수정 fix는 유지)
 - yyyy.mmdd: 배포 당일 날짜

@@ -7,6 +7,13 @@
 
 ---
 
+## ver.3.1.2026.0413
+- feat: YouVersion Platform API를 통한 KLB(Korean Living Bible) 지원 추가
+  - bible.html: version_id = 'KLB' 설정 시 YouVersion API에서 KLB 본문 로드
+  - youversion-proxy: Supabase Edge Functions로 CORS 프록시 구현
+  - 로컬 개발: 로컬 Node.js 프록시 서버 지원
+  - 절 단위 파싱: HTML format 활용으로 1회 API 요청만 사용 (빠른 로드)
+
 ## ver.2.9.2026.0408
 - bible.html: 헤더 플랜 날짜를 맨 우측 끝으로 이동
 
