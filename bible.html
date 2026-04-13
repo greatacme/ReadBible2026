@@ -235,9 +235,15 @@
         const bookCode = code.toLowerCase()  // 'GEN' → 'gen'
         const iframeUrl = `https://www.bskorea.or.kr/bible/korbibReadpage.php?version=SAENEW&book=${bookCode}&chap=${chapterNo}&sec=1`
 
+        // 모바일/데스크톱 크기별 스타일 설정
+        const isMobile = window.innerWidth < 768
+        const containerWidth = isMobile ? '100%' : '100%'
+        const containerMaxWidth = isMobile ? 'none' : '850px'
+        const iframeLeft = isMobile ? '0' : '-10px'
+
         // CSS overflow:hidden으로 본문 영역만 노출
         document.getElementById('content').innerHTML = `
-          <div style="overflow: hidden; position: relative; width: 100%; max-width: 850px;">
+          <div style="overflow: hidden; position: relative; width: ${containerWidth}; max-width: ${containerMaxWidth};">
             <iframe
               src="${iframeUrl}"
               style="
@@ -248,7 +254,7 @@
                 padding: 0;
                 position: absolute;
                 top: -500px;
-                left: -10px;
+                left: ${iframeLeft};
               "
               title="${book} ${chapterNo}장 (새번역)"
               sandbox="allow-same-origin allow-scripts">
