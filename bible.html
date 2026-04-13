@@ -162,12 +162,12 @@
       }
 
       // version_id 분기:
-      // - null: helloao.org API (개역한글)
-      // - 'KLB': YouVersion API (Korean Living Bible)
+      // - 'KRV' 또는 null: helloao.org API (개역한글)
+      // - 'KLB': YouVersion API (현대인의 성경)
       // - 그 외 숫자: Supabase verse 테이블
       if (versionId === 'KLB') {
         await loadChapterFromYouVersion()
-      } else if (versionId) {
+      } else if (versionId && versionId !== 'KRV') {
         await loadChapterFromDB()
       } else {
         await loadChapterFromAPI()

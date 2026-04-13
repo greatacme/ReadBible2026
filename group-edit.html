@@ -23,6 +23,15 @@
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
       </div>
 
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-1">성경 버전</label>
+        <select id="inputVersion"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="KRV">개역한글</option>
+          <option value="KLB">현대인의 성경</option>
+        </select>
+      </div>
+
       <p id="errorMsg" class="text-red-500 text-xs hidden"></p>
 
       <button id="saveBtn"
@@ -62,9 +71,23 @@
     const groupCode = params.get('group')
     if (!groupCode) location.href = 'home.html'
 
+    let currentVersionId = 'KRV'
+
+    // 그룹 정보 로드
+    async function loadGroupInfo() {
+      const { data: group } = await sb.from('groups').select('version_id')
+        .eq('group_code', groupCode).maybeSingle()
+      if (group) {
+        currentVersionId = group.version_id || 'KRV'
+        document.getElementById('inputVersion').value = currentVersionId
+      }
+    }
+
     document.getElementById('inputGroup').value = groupCode
     document.getElementById('backBtn').onclick = () =>
       location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+
+    loadGroupInfo()
 
     function showError(msg) {
       const el = document.getElementById('errorMsg')
@@ -74,27 +97,40 @@
 
     document.getElementById('saveBtn').onclick = async () => {
       const newGroup = document.getElementById('inputGroup').value.trim()
+      const newVersion = document.getElementById('inputVersion').value
       document.getElementById('errorMsg').classList.add('hidden')
 
       if (!newGroup) { showError('그룹 코드를 입력해주세요.'); return }
-      if (newGroup === groupCode) {
+
+      // 그룹명과 버전 모두 변경 없는 경우
+      if (newGroup === groupCode && newVersion === currentVersionId) {
         location.href = `index.html?group=${encodeURIComponent(groupCode)}`
         return
       }
 
-      // 중복 확인
-      const { data: dup } = await sb.from('groups').select('group_code')
-        .eq('group_code', newGroup).maybeSingle()
-      if (dup) { showError('이미 존재하는 그룹 코드입니다.'); return }
+      // 그룹명이 변경된 경우 중복 확인
+      if (newGroup !== groupCode) {
+        const { data: dup } = await sb.from('groups').select('group_code')
+          .eq('group_code', newGroup).maybeSingle()
+        if (dup) { showError('이미 존재하는 그룹 코드입니다.'); return }
+      }
 
-      // 기존 그룹 plan_set_id 조회
+      // 그룹명 변경 없이 버전만 변경하는 경우
+      if (newGroup === groupCode) {
+        const { error: updateErr } = await sb.from('groups')
+          .update({ version_id: newVersion }).eq('group_code', groupCode)
+        if (updateErr) { showError('저장 중 오류가 발생했습니다.'); return }
+        location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+        return
+      }
+
+      // 그룹명 변경하는 경우
       const { data: oldGrp } = await sb.from('groups').select('plan_set_id')
         .eq('group_code', groupCode).maybeSingle()
       const planSetId = oldGrp?.plan_set_id ?? 1
 
-      // 새 그룹 insert → users group_code 일괄 변경 → 기존 그룹 delete
       const { error: insertErr } = await sb.from('groups')
-        .insert({ group_code: newGroup, plan_set_id: planSetId })
+        .insert({ group_code: newGroup, plan_set_id: planSetId, version_id: newVersion })
       if (insertErr) { showError('저장 중 오류가 발생했습니다.'); return }
 
       await sb.from('users').update({ group_code: newGroup }).eq('group_code', groupCode)

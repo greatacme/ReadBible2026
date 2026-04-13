@@ -107,17 +107,15 @@ sb.rpc('get_stats', { p_group_code: groupCode })
 
 bible.html은 그룹의 `version_id`에 따라 본문 소스를 분기한다:
 
-- `version_id = null` → helloao.org API [개역한글]
-- `version_id = 'KLB'` → YouVersion Platform API (Supabase Edge Functions 프록시)
+- `version_id = 'KRV'` 또는 `null` → helloao.org API [개역한글]
+- `version_id = 'KLB'` → YouVersion Platform API (Supabase Edge Functions 프록시) [현대인의 성경]
 - `version_id = N` (숫자) → Supabase `verse` 테이블
 
-### KLB(Korean Living Bible) 설정
+### 성경 버전 설정
 
-```sql
-UPDATE groups SET version_id = 'KLB' WHERE group_code = '그룹코드';
-```
+`group-edit.html`의 성경 버전 선택에서 관리합니다.
 
-**요구사항:**
+**KLB(현대인의 성경) 설정 시 요구사항:**
 - YouVersion Platform API Key
 - Supabase Edge Functions: `youversion-proxy` 배포
 
