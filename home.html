@@ -122,8 +122,7 @@
 
       const { error } = await sb.from('groups').insert({
         group_code: groupCode,
-        plan_set_id: planSetId,
-        version_id: 'KRV'
+        plan_set_id: planSetId
       })
       if (error) {
         errEl.textContent = '생성 중 오류가 발생했습니다.'
