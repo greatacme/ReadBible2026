@@ -163,9 +163,12 @@
 
       // bibleVerCd 분기:
       // - 'KLB': YouVersion API (현대인의 성경)
+      // - 'RNKSV': Supabase verse 테이블 (새번역)
       // - 'KJV': helloao.org API (개역한글)
       if (bibleVerCd === 'KLB') {
         await loadChapterFromYouVersion()
+      } else if (bibleVerCd === 'RNKSV') {
+        await loadChapterFromDB('RNKSV')
       } else {
         await loadChapterFromAPI()
       }
@@ -192,7 +195,7 @@
     }
 
     // ── Supabase verse 테이블로 본문 로드 ───────────────────────────────
-    async function loadChapterFromDB() {
+    async function loadChapterFromDB(versionId) {
       const { data: bookRow } = await sb.from('book').select('book_id').eq('name_ko', book).maybeSingle()
       if (!bookRow) {
         document.getElementById('content').innerHTML =

@@ -105,19 +105,19 @@ sb.rpc('get_stats', { p_group_code: groupCode })
 
 ## 성경 본문 소스 분기
 
-bible.html은 그룹의 `version_id`에 따라 본문 소스를 분기한다:
+bible.html은 사용자의 `bible_ver_cd`에 따라 본문 소스를 분기한다:
 
-- `version_id = 'KRV'` 또는 `null` → helloao.org API [개역한글]
-- `version_id = 'KLB'` → YouVersion Platform API (Supabase Edge Functions 프록시) [현대인의 성경]
-- `version_id = N` (숫자) → Supabase `verse` 테이블
+- `bible_ver_cd = 'KJV'` (기본값) → helloao.org API [개역한글]
+- `bible_ver_cd = 'KLB'` → YouVersion Platform API (Supabase Edge Functions 프록시) [현대인의 성경]
+- `bible_ver_cd = 'RNKSV'` → Supabase `verse` 테이블 [새번역]
 
 ### 성경 버전 설정
 
-`group-edit.html`의 성경 버전 선택에서 관리합니다.
+`edit.html` (프로필 편집)에서 사용자별로 관리합니다. 각 사용자가 로그인 후 선택한 버전으로 성경을 읽습니다.
 
-**KLB(현대인의 성경) 설정 시 요구사항:**
-- YouVersion Platform API Key
-- Supabase Edge Functions: `youversion-proxy` 배포
+**요구사항:**
+- KLB 버전: YouVersion Platform API Key + Supabase Edge Functions: `youversion-proxy` 배포
+- RNKSV 버전: Supabase `verse`, `section_heading`, `footnote` 테이블에 RNKSV 데이터 필요
 
 ---
 
