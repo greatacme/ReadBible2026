@@ -82,7 +82,7 @@
 
     let userId           = null
     let planSetId        = 1
-    let bibleVerCd       = 'KLB'
+    let bibleVerCd       = 'KJV'
     let scrolledToBottom = false
     let saveTimer        = null
     let prevPlan         = null
@@ -316,7 +316,7 @@
 
       if (user) {
         userId = user.id
-        bibleVerCd = user.bible_ver_cd || 'KLB'
+        bibleVerCd = user.bible_ver_cd || 'KJV'
         const { data: rec } = await sb.from('records')
           .select('completed').eq('user_id', userId).eq('plan_id', planId).maybeSingle()
         if (rec?.completed) {

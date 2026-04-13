@@ -61,8 +61,8 @@
         <label class="block text-sm font-semibold text-gray-600 mb-1">성경 버전</label>
         <select id="inputBibleVer"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <option value="KLB">현대인의 성경 (KLB)</option>
           <option value="KJV">개역한글 (KJV)</option>
+          <option value="KLB">현대인의 성경 (KLB)</option>
         </select>
       </div>
 
@@ -105,7 +105,7 @@
       if (user?.bible_ver_cd) {
         document.getElementById('inputBibleVer').value = user.bible_ver_cd
       } else {
-        document.getElementById('inputBibleVer').value = 'KLB'
+        document.getElementById('inputBibleVer').value = 'KJV'
       }
     }
     loadUser()
