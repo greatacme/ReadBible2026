@@ -7,6 +7,14 @@
 
 ---
 
+## ver.3.2.2026.0413
+- feat: 사용자별 성경 버전 설정 기능 추가
+  - edit.html: 프로필 편집 페이지에 성경 버전 선택 필드 추가 (KLB/KJV)
+  - users.bible_ver_cd 컬럼 참조 (groups.version_id 대신)
+  - KLB: YouVersion API (현대인의 성경)
+  - KJV: helloao.org API (개역한글)
+  - 신규 사용자 기본값: KLB
+
 ## ver.3.1.2026.0413
 - feat: YouVersion Platform API를 통한 KLB(Korean Living Bible) 지원 추가
   - bible.html: version_id = 'KLB' 설정 시 YouVersion API에서 KLB 본문 로드
