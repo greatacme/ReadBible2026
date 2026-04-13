@@ -235,20 +235,20 @@
         const bookCode = code.toLowerCase()  // 'GEN' → 'gen'
         const iframeUrl = `https://www.bskorea.or.kr/bible/korbibReadpage.php?version=SAENEW&book=${bookCode}&chap=${chapterNo}&sec=1`
 
-        // CSS overflow:hidden으로 본문 영역만 노출 (헤더/사이드바 제거)
+        // CSS overflow:hidden으로 왼쪽 본문만 노출 (우측 사이드바 제거)
         document.getElementById('content').innerHTML = `
           <div style="overflow: hidden; position: relative; width: 100%;">
             <iframe
               src="${iframeUrl}"
               style="
-                width: 1600px;
+                width: 1400px;
                 height: 2000px;
                 border: none;
                 margin: 0;
                 padding: 0;
                 position: absolute;
                 top: -500px;
-                left: 0;
+                left: -150px;
               "
               title="${book} ${chapterNo}장 (새번역)"
               sandbox="allow-same-origin allow-scripts">
