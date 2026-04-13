@@ -89,6 +89,7 @@
     let nextPlan         = null
 
     const klbBibleId = 86  // KLB (Korean Living Bible) Bible ID
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     let bibleStructure = {}  // 성경 구조 캐시 (책별 절 정보)
 
     // ── 저장 표시 ────────────────────────────────────────────────────────
@@ -230,15 +231,20 @@
 
         const passageId = `${code}.${chapterNo}`
 
-        let url
+        let url, fetchOptions = {}
         if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
           // 로컬: 프록시 서버
           url = `http://127.0.0.1:8001/youversion/bibles/${klbBibleId}/passages/${passageId}?format=html`
         } else {
           // 프로덕션: Supabase Edge Functions
           url = `https://wwnohpprdjnvdjccednr.supabase.co/functions/v1/youversion-proxy?bible_id=${klbBibleId}&passage_id=${passageId}&format=html`
+          fetchOptions = {
+            headers: {
+              'Authorization': `Bearer ${supabaseAnonKey}`
+            }
+          }
         }
-        const res = await fetch(url)
+        const res = await fetch(url, fetchOptions)
 
         if (!res.ok) {
           throw new Error(`API 오류: ${res.status}`)
