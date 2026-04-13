@@ -109,7 +109,6 @@ bible.html은 그룹의 `version_id`에 따라 본문 소스를 분기한다:
 
 - `version_id = null` → helloao.org API [개역한글]
 - `version_id = 'KLB'` → YouVersion Platform API (Supabase Edge Functions 프록시)
-- `version_id = 'RNKSV'` → 대한성서공회 (bskorea.or.kr iframe)
 - `version_id = N` (숫자) → Supabase `verse` 테이블
 
 ### KLB(Korean Living Bible) 설정
@@ -121,17 +120,6 @@ UPDATE groups SET version_id = 'KLB' WHERE group_code = '그룹코드';
 **요구사항:**
 - YouVersion Platform API Key
 - Supabase Edge Functions: `youversion-proxy` 배포
-
-### RNKSV(새번역) 설정
-
-```sql
-UPDATE groups SET version_id = 'RNKSV' WHERE group_code = '그룹코드';
-```
-
-**특징:**
-- 대한성서공회 웹사이트를 iframe으로 임베드
-- CORS 제약 없음
-- 추가 설정 불필요
 
 ---
 

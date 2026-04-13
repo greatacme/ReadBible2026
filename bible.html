@@ -164,12 +164,9 @@
       // version_id 분기:
       // - null: helloao.org API (개역한글)
       // - 'KLB': YouVersion API (Korean Living Bible)
-      // - 'RNKSV': bskorea.or.kr iframe (새번역)
       // - 그 외 숫자: Supabase verse 테이블
       if (versionId === 'KLB') {
         await loadChapterFromYouVersion()
-      } else if (versionId === 'RNKSV') {
-        loadChapterFromBSKorea()
       } else if (versionId) {
         await loadChapterFromDB()
       } else {
@@ -222,61 +219,7 @@
       })))
     }
 
-    // ── 대한성서공회(bskorea.or.kr) iframe으로 로드 (RNKSV) ───────────────────
-    function loadChapterFromBSKorea() {
-      try {
-        const code = BOOK_CODES[book]
-        if (!code) {
-          document.getElementById('content').innerHTML =
-            '<p class="text-red-500 text-center py-10">알 수 없는 성경 책 이름입니다</p>'
-          return
-        }
-
-        const bookCode = code.toLowerCase()  // 'GEN' → 'gen'
-        const iframeUrl = `https://www.bskorea.or.kr/bible/korbibReadpage.php?version=SAENEW&book=${bookCode}&chap=${chapterNo}&sec=1`
-
-        // 모바일/데스크톱 크기별 스타일 설정
-        const isMobile = window.innerWidth < 768
-        const containerWidth = isMobile ? '100%' : '100%'
-        const containerMaxWidth = isMobile ? 'none' : '850px'
-        const iframeLeft = isMobile ? '0' : '-10px'
-
-        // CSS overflow:hidden으로 본문 영역만 노출
-        document.getElementById('content').innerHTML = `
-          <div style="overflow: hidden; position: relative; width: ${containerWidth}; max-width: ${containerMaxWidth};">
-            <iframe
-              src="${iframeUrl}"
-              style="
-                width: 1200px;
-                height: 2000px;
-                border: none;
-                margin: 0;
-                padding: 0;
-                position: absolute;
-                top: -500px;
-                left: ${iframeLeft};
-              "
-              title="${book} ${chapterNo}장 (새번역)"
-              sandbox="allow-same-origin allow-scripts">
-            </iframe>
-          </div>
-        `
-
-        // 컨테이너 높이 조정 (본문 영역만)
-        setTimeout(() => {
-          const container = document.querySelector('[style*="overflow"]')
-          if (container) {
-            container.style.height = '1600px'
-          }
-        }, 1500)
-      } catch (e) {
-        console.error('bskorea.or.kr 로드 오류:', e)
-        document.getElementById('content').innerHTML =
-          '<p class="text-red-500 text-center py-10">성경을 불러오지 못했습니다</p>'
-      }
-    }
-
-    // ── YouVersion API로 본문 로드 (HTML 포맷, 절 단위 파싱) ────────────────
+// ── YouVersion API로 본문 로드 (HTML 포맷, 절 단위 파싱) ────────────────
     async function loadChapterFromYouVersion() {
       try {
         const code = BOOK_CODES[book]
