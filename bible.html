@@ -163,14 +163,14 @@
 
       // bibleVerCd 분기:
       // - 'KLB': YouVersion API (현대인의 성경)
-      // - 'RNKSV': Supabase verse 테이블 (새번역)
       // - 'KJV': helloao.org API (개역한글)
+      // - 그 외 (RNKSV 등): Supabase verse 테이블
       if (bibleVerCd === 'KLB') {
         await loadChapterFromYouVersion()
-      } else if (bibleVerCd === 'RNKSV') {
-        await loadChapterFromDB('RNKSV')
-      } else {
+      } else if (bibleVerCd === 'KJV') {
         await loadChapterFromAPI()
+      } else {
+        await loadChapterFromDB(bibleVerCd)
       }
       setTimeout(checkScroll, 200)
     }
