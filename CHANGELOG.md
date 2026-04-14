@@ -7,6 +7,16 @@
 
 ---
 
+## ver.3.4.2026.0414
+- feat: plan_set_id=3 읽기 일정 추가 (2026-02-09 ~ 2026-11-26, 1,189장)
+- feat: RNKSV(새번역) 성경 버전 지원 추가
+  - Supabase verse 테이블에서 로드
+  - 마이그레이션: supabase_migration_version_id.sql (SAENEW → RNKSV)
+- refactor: 성경 버전 분기 로직 개선
+  - KLB: YouVersion API (현대인의 성경)
+  - KJV: helloao.org API (개역한글)
+  - 그 외: Supabase verse 테이블
+
 ## ver.3.3.2026.0413
 - chore: 성경 버전 기본값을 개역한글(KJV)로 변경
 - chore: groups 테이블 version_id 사용 제거 (groups.version_id 컬럼 삭제 가능)
