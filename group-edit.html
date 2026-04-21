@@ -63,7 +63,7 @@
     const params       = new URLSearchParams(location.search)
     const groupCode    = params.get('group')
     const ministryCode = params.get('ministry') || '0'
-    if (!groupCode) location.href = 'home.html'
+    if (!groupCode) location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
 
     document.getElementById('inputGroup').value = groupCode
     document.getElementById('backBtn').onclick = () =>
@@ -136,7 +136,7 @@
       if (!confirm(`'${groupCode}' 그룹을 삭제하시겠습니까?`)) return
 
       await sb.from('groups').delete().eq('group_code', groupCode).eq('ministry_cd', ministryCode)
-      location.href = 'home.html'
+      location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
     }
   </script>
 </body>

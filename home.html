@@ -63,8 +63,11 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
+    const ministryCode = new URLSearchParams(location.search).get('ministry') || '0'
+
     async function loadGroups() {
       const { data: groups } = await sb.from('groups').select('group_code')
+        .eq('ministry_cd', ministryCode)
       if (groups) groups.sort((a, b) =>
         a.group_code.localeCompare(b.group_code, 'ko', { numeric: true })
       )
@@ -78,7 +81,7 @@
       listEl.innerHTML = `
         <div class="flex flex-wrap gap-2">
           ${groups.map(g => `
-            <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}&ministry=0'"
+            <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}&ministry=${encodeURIComponent(ministryCode)}'"
               class="bg-white hover:bg-blue-700 hover:text-white text-gray-800 font-semibold
                      px-4 py-2 rounded-xl shadow text-sm transition">
               ${g.group_code}
@@ -140,7 +143,7 @@
 
       // 중복 확인
       const { data: existing } = await sb.from('groups').select('group_code')
-        .eq('group_code', groupCode).maybeSingle()
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       if (existing) {
         errEl.textContent = '이미 존재하는 그룹 코드입니다.'
         errEl.classList.remove('hidden')
@@ -149,7 +152,8 @@
 
       const { error } = await sb.from('groups').insert({
         group_code: groupCode,
-        plan_set_cd: planSetCd
+        plan_set_cd: planSetCd,
+        ministry_cd: ministryCode
       })
       if (error) {
         errEl.textContent = '생성 중 오류가 발생했습니다.'
@@ -157,7 +161,7 @@
         return
       }
 
-      location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+      location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
     }
 
     document.getElementById('newGroupCode').addEventListener('keydown', e => {

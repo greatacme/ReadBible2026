@@ -48,7 +48,7 @@
     const nickname     = params.get('nickname')
     const groupCode    = params.get('group')
     const ministryCode = params.get('ministry') || '0'
-    if (!nickname || !groupCode) location.href = 'index.html'
+    if (!nickname || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
     const groupParam = `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -193,11 +193,11 @@
       ])
       if (!user) {
         if (!confirm(`'${nickname}'(으)로 신규 등록하시겠습니까?`)) {
-          location.href = 'index.html'
+          location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
           return
         }
         const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode, ministry_cd: ministryCode }).select('id').single()
-        if (error) { location.href = 'index.html'; return }
+        if (error) { location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`; return }
         user = newUser
       }
       userId = user.id

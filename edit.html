@@ -95,7 +95,7 @@
     const nickname     = params.get('nickname')
     const groupCode    = params.get('group')
     const ministryCode = params.get('ministry') || '0'
-    if (!nickname || !groupCode) location.href = 'index.html'
+    if (!nickname || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
 
     document.getElementById('inputNickname').value = nickname
     document.getElementById('backBtn').onclick = () =>

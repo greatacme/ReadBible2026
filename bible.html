@@ -79,7 +79,7 @@
     const ministryCode = p.get('ministry') || '0'
     const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}` : ''
 
-    if (!nickname || !book || !chapterNo || !groupCode) location.href = 'index.html'
+    if (!nickname || !book || !chapterNo || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
 
     let userId           = null
     let planSetCd        = '1'

@@ -14,7 +14,7 @@
     <h1 id="siteTitle" class="text-2xl font-bold tracking-wide text-center">✝ 2026년 연세대학교회 성경통독</h1>
     <div class="flex items-center mt-1 px-4">
       <div class="flex-1 flex items-center">
-        <a href="home.html" class="text-blue-400 hover:text-white text-sm whitespace-nowrap">🏠 홈</a>
+        <a id="homeBtn" class="text-blue-400 hover:text-white text-sm whitespace-nowrap cursor-pointer">🏠 홈</a>
       </div>
       <p id="siteSubtitle" class="text-blue-300 text-base">믿음으로 읽는 하나님의 말씀</p>
       <div class="flex-1 flex items-center justify-end gap-3">
@@ -82,7 +82,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!groupCode) {
-        location.replace('home.html')
+        location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`)
         return
       } else {
         document.getElementById('siteSubtitle').textContent = `${groupCode} group`
@@ -101,9 +101,9 @@
 
       const [{ data: grp }, { data, error }] = await Promise.all([
         sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
-        sb.rpc('get_stats', { p_group_code: groupCode, p_ministry_cd: ministryCode })
+        sb.rpc('get_stats_tmp', { p_group_code: groupCode, p_ministry_cd: ministryCode })
       ])
-      if (!grp) { location.replace('home.html'); return }
+      if (!grp) { location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`); return }
       document.getElementById('siteSubtitle').textContent = `${groupCode} group`
       document.getElementById('chartLoading').classList.add('hidden')
 
@@ -220,6 +220,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('homeBtn').onclick = () =>
+        location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
       document.getElementById('nicknameInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') goRecord()
       })
