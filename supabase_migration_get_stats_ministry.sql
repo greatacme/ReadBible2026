@@ -1,11 +1,11 @@
 -- ============================================================
 -- get_stats() 함수 수정 - ministry 계층 지원
--- get_stats_tmp()와 동일한 형식, 함수명만 변경
+-- Supabase에서 정상 작동하는 함수 정의로 확정
 -- ============================================================
 
 DROP FUNCTION IF EXISTS public.get_stats(TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION get_stats(p_group_code TEXT, p_ministry_cd TEXT DEFAULT '0')
+CREATE OR REPLACE FUNCTION public.get_stats(p_group_code TEXT, p_ministry_cd TEXT DEFAULT '0')
 RETURNS TABLE(nickname TEXT, completed BIGINT, planned BIGINT, rate NUMERIC)
 LANGUAGE sql SECURITY DEFINER
 AS $$
@@ -43,13 +43,9 @@ AS $$
   ORDER BY rate DESC, COALESCE(ud.first_record_at, ud.created_at) ASC;
 $$;
 
--- 실행 후 정리 작업:
--- 1. supabase_migration_drop_plan_set_id.sql 생성 후 실행
---    - groups 테이블에서 plan_set_id INTEGER 컬럼 삭제
---    - plans 테이블에서 plan_set_id INTEGER 컬럼 삭제
---    - idx_plans_plan_set 인덱스 삭제
---
--- 2. index.html 수정: get_stats_tmp() → get_stats()로 변경
---
--- 3. supabase_migration_ministry.sql에서 get_stats_tmp() 함수 삭제
---    CREATE OR REPLACE FUNCTION get_stats_tmp() ... 제거
+-- ============================================================
+-- 실행 후 정리 작업
+-- ============================================================
+-- 1. plan_set_id 컬럼 삭제: supabase_migration_drop_plan_set_id.sql 실행
+-- 2. get_stats_tmp() 함수 삭제:
+--    DROP FUNCTION IF EXISTS public.get_stats_tmp(TEXT, TEXT);
