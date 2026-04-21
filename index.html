@@ -101,7 +101,7 @@
 
       const [{ data: grp }, { data, error }] = await Promise.all([
         sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
-        sb.rpc('get_stats_tmp', { p_group_code: groupCode, p_ministry_cd: ministryCode })
+        sb.rpc('get_stats', { p_group_code: groupCode, p_ministry_cd: ministryCode })
       ])
       if (!grp) { location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`); return }
       document.getElementById('siteSubtitle').textContent = `${groupCode} group`
