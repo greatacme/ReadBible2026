@@ -75,8 +75,9 @@
     const chapterNo  = Number(p.get('chapter_no'))
     const sortOrder  = Number(p.get('sort_order'))
 
-    const groupCode = p.get('group')
-    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}` : ''
+    const groupCode    = p.get('group')
+    const ministryCode = p.get('ministry') || '0'
+    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}` : ''
 
     if (!nickname || !book || !chapterNo || !groupCode) location.href = 'index.html'
 

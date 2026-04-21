@@ -78,7 +78,7 @@
       listEl.innerHTML = `
         <div class="flex flex-wrap gap-2">
           ${groups.map(g => `
-            <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}'"
+            <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}&ministry=0'"
               class="bg-white hover:bg-blue-700 hover:text-white text-gray-800 font-semibold
                      px-4 py-2 rounded-xl shadow text-sm transition">
               ${g.group_code}

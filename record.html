@@ -19,7 +19,7 @@
 <body class="bg-slate-100 min-h-screen">
 
   <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
-    <button onclick="location.href='index.html?group=' + encodeURIComponent(groupCode)" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
+    <button onclick="location.href='index.html?group=' + encodeURIComponent(groupCode) + '&ministry=' + encodeURIComponent(ministryCode)" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
     <div class="flex-1 min-w-0">
       <h1 id="userName" class="text-base font-bold truncate">성경통독 기록</h1>
       <p id="userRate" class="text-blue-300 text-xs"></p>
@@ -44,11 +44,12 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
-    const params    = new URLSearchParams(location.search)
-    const nickname  = params.get('nickname')
-    const groupCode = params.get('group')
+    const params       = new URLSearchParams(location.search)
+    const nickname     = params.get('nickname')
+    const groupCode    = params.get('group')
+    const ministryCode = params.get('ministry') || '0'
     if (!nickname || !groupCode) location.href = 'index.html'
-    const groupParam = `&group=${encodeURIComponent(groupCode)}`
+    const groupParam = `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토']
     const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date())
@@ -187,15 +188,15 @@
     async function loadRecords() {
       // 1. 사용자 조회 + groups 조회 병렬
       let [{ data: user }, { data: grp }] = await Promise.all([
-        sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle(),
-        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle()
+        sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
+        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       ])
       if (!user) {
         if (!confirm(`'${nickname}'(으)로 신규 등록하시겠습니까?`)) {
           location.href = 'index.html'
           return
         }
-        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode }).select('id').single()
+        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode, ministry_cd: ministryCode }).select('id').single()
         if (error) { location.href = 'index.html'; return }
         user = newUser
       }

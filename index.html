@@ -76,8 +76,9 @@
     )
 
     const groupCode  = new URLSearchParams(location.search).get('group')
+    const ministryCode = new URLSearchParams(location.search).get('ministry') || '0'
     const planSetId  = parseInt(new URLSearchParams(location.search).get('plan')) || 1
-    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}` : ''
+    const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}` : ''
 
     document.addEventListener('DOMContentLoaded', () => {
       if (!groupCode) {
@@ -86,7 +87,7 @@
       } else {
         document.getElementById('siteSubtitle').textContent = `${groupCode} group`
         const editBtn = document.getElementById('groupEditBtn')
-        editBtn.href = `group-edit.html?group=${encodeURIComponent(groupCode)}`
+        editBtn.href = `group-edit.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
         editBtn.classList.remove('hidden')
         document.getElementById('shareBtn').classList.remove('hidden')
       }
@@ -99,8 +100,8 @@
       if (!groupCode) return
 
       const [{ data: grp }, { data, error }] = await Promise.all([
-        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
-        sb.rpc('get_stats', { p_group_code: groupCode })
+        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
+        sb.rpc('get_stats', { p_group_code: groupCode, p_ministry_cd: ministryCode })
       ])
       if (!grp) { location.replace('home.html'); return }
       document.getElementById('siteSubtitle').textContent = `${groupCode} group`
@@ -196,10 +197,10 @@
       errEl.classList.add('hidden')
 
       // 기존 사용자 조회 또는 신규 등록
-      let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+      let { data: user } = await sb.from('users').select('id').eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       if (!user) {
         if (!confirm(`'${nickname}'(으)로 신규 등록하시겠습니까?`)) return
-        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode }).select('id').single()
+        const { data: newUser, error } = await sb.from('users').insert({ nickname, group_code: groupCode, ministry_cd: ministryCode }).select('id').single()
         if (error) {
           errEl.textContent = '등록 중 오류가 발생했습니다'
           errEl.classList.remove('hidden')
@@ -211,7 +212,7 @@
     }
 
     async function shareGroup() {
-      const url = `${location.origin}${location.pathname}?group=${encodeURIComponent(groupCode)}`
+      const url = `${location.origin}${location.pathname}?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
       await navigator.clipboard.writeText(url)
       const btn = document.getElementById('shareBtn')
       btn.textContent = '복사됨!'

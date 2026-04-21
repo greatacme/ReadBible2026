@@ -60,13 +60,14 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
-    const params    = new URLSearchParams(location.search)
-    const groupCode = params.get('group')
+    const params       = new URLSearchParams(location.search)
+    const groupCode    = params.get('group')
+    const ministryCode = params.get('ministry') || '0'
     if (!groupCode) location.href = 'home.html'
 
     document.getElementById('inputGroup').value = groupCode
     document.getElementById('backBtn').onclick = () =>
-      location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+      location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
     function isValidGroupCode(text) {
       if (!text || text.length === 0) return false
@@ -89,28 +90,28 @@
 
       // 변경 없는 경우
       if (newGroup === groupCode) {
-        location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+        location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
         return
       }
 
       // 중복 확인
       const { data: dup } = await sb.from('groups').select('group_code')
-        .eq('group_code', newGroup).maybeSingle()
+        .eq('group_code', newGroup).eq('ministry_cd', ministryCode).maybeSingle()
       if (dup) { showError('이미 존재하는 그룹 코드입니다.'); return }
 
       // 그룹명 변경
       const { data: oldGrp } = await sb.from('groups').select('plan_set_cd')
-        .eq('group_code', groupCode).maybeSingle()
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       const planSetCd = oldGrp?.plan_set_cd ?? '1'
 
       const { error: insertErr } = await sb.from('groups')
-        .insert({ group_code: newGroup, plan_set_cd: planSetCd })
+        .insert({ group_code: newGroup, plan_set_cd: planSetCd, ministry_cd: ministryCode })
       if (insertErr) { showError('저장 중 오류가 발생했습니다.'); return }
 
-      await sb.from('users').update({ group_code: newGroup }).eq('group_code', groupCode)
-      await sb.from('groups').delete().eq('group_code', groupCode)
+      await sb.from('users').update({ group_code: newGroup }).eq('group_code', groupCode).eq('ministry_cd', ministryCode)
+      await sb.from('groups').delete().eq('group_code', groupCode).eq('ministry_cd', ministryCode)
 
-      const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(newGroup)}`
+      const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(newGroup)}&ministry=${encodeURIComponent(ministryCode)}`
       await navigator.clipboard.writeText(url)
 
       document.getElementById('copyModal').classList.remove('hidden')
@@ -126,7 +127,7 @@
       document.getElementById('errorMsg').classList.add('hidden')
 
       // 소속 사용자 수 확인
-      const { data: users } = await sb.from('users').select('id').eq('group_code', groupCode)
+      const { data: users } = await sb.from('users').select('id').eq('group_code', groupCode).eq('ministry_cd', ministryCode)
       if (users && users.length > 0) {
         showError(`이 그룹에 ${users.length}명의 사용자가 있습니다. 모든 사용자를 다른 그룹으로 이동한 후 삭제해주세요.`)
         return
@@ -134,7 +135,7 @@
 
       if (!confirm(`'${groupCode}' 그룹을 삭제하시겠습니까?`)) return
 
-      await sb.from('groups').delete().eq('group_code', groupCode)
+      await sb.from('groups').delete().eq('group_code', groupCode).eq('ministry_cd', ministryCode)
       location.href = 'home.html'
     }
   </script>

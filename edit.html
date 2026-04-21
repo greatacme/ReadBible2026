@@ -91,19 +91,20 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     )
 
-    const params    = new URLSearchParams(location.search)
-    const nickname  = params.get('nickname')
-    const groupCode = params.get('group')
+    const params       = new URLSearchParams(location.search)
+    const nickname     = params.get('nickname')
+    const groupCode    = params.get('group')
+    const ministryCode = params.get('ministry') || '0'
     if (!nickname || !groupCode) location.href = 'index.html'
 
     document.getElementById('inputNickname').value = nickname
     document.getElementById('backBtn').onclick = () =>
-      location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}`
+      location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
     // 사용자 정보 로드 (성경 버전 포함)
     async function loadUser() {
       const { data: user } = await sb.from('users').select('bible_ver_cd')
-        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       if (user?.bible_ver_cd) {
         document.getElementById('inputBibleVer').value = user.bible_ver_cd
       } else {
@@ -208,13 +209,13 @@
 
       // 현재 사용자 조회
       const { data: user } = await sb.from('users').select('id')
-        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       if (!user) { showError('사용자를 찾을 수 없습니다.'); return }
 
       // 닉네임+그룹 중복 확인 (자신 제외)
       if (newNickname !== nickname || newGroup !== groupCode) {
         const { data: dup } = await sb.from('users').select('id')
-          .eq('nickname', newNickname).eq('group_code', newGroup).maybeSingle()
+          .eq('nickname', newNickname).eq('group_code', newGroup).eq('ministry_cd', ministryCode).maybeSingle()
         if (dup && dup.id !== user.id) {
           showError('해당 그룹에 이미 같은 닉네임이 존재합니다.')
           return
@@ -224,8 +225,8 @@
       // 그룹 변경 시 plan_set_cd 비교
       if (newGroup !== groupCode) {
         const [{ data: oldGrp }, { data: newGrp }] = await Promise.all([
-          sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
-          sb.from('groups').select('plan_set_cd').eq('group_code', newGroup).maybeSingle(),
+          sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
+          sb.from('groups').select('plan_set_cd').eq('group_code', newGroup).eq('ministry_cd', ministryCode).maybeSingle(),
         ])
         const oldPlanSetCd = oldGrp?.plan_set_cd ?? '1'
         const newPlanSetCd = newGrp?.plan_set_cd ?? '1'
@@ -244,11 +245,11 @@
       }
 
       const { error } = await sb.from('users')
-        .update({ nickname: newNickname, group_code: newGroup, bible_ver_cd: newBibleVer })
+        .update({ nickname: newNickname, group_code: newGroup, ministry_cd: ministryCode, bible_ver_cd: newBibleVer })
         .eq('id', user.id)
       if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
-      location.href = `record.html?nickname=${encodeURIComponent(newNickname)}&group=${encodeURIComponent(newGroup)}`
+      location.href = `record.html?nickname=${encodeURIComponent(newNickname)}&group=${encodeURIComponent(newGroup)}&ministry=${encodeURIComponent(ministryCode)}`
     }
 
     // ── 삭제 ─────────────────────────────────────────────────────────────
@@ -256,13 +257,13 @@
       if (!confirm(`'${nickname}' 계정과 모든 기록을 삭제합니다. 계속하시겠습니까?`)) return
 
       const { data: user } = await sb.from('users').select('id')
-        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       if (!user) { showError('사용자를 찾을 수 없습니다.'); return }
 
       await sb.from('records').delete().eq('user_id', user.id)
       await sb.from('users').delete().eq('id', user.id)
 
-      location.href = `index.html?group=${encodeURIComponent(groupCode)}`
+      location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
     }
   </script>
 </body>
