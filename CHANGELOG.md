@@ -7,6 +7,14 @@
 
 ---
 
+## ver.3.5.2026.0422
+- feat: ministry 계층 완전 적용
+  - get_stats() 함수: ministry_cd 파라미터 추가
+  - 그룹별 독립적인 통계 계산
+  - plan_set_id 컬럼 제거 예정 (plan_set_cd로 완전 전환)
+- refactor: Supabase 마이그레이션 정리
+  - supabase_migration_drop_plan_set_id.sql 추가
+
 ## ver.3.4.2026.0419
 - fix: 문자 인코딩 문제 예방 (한글 깨짐 현상 방지)
   - 모든 입력 폼에 accept-charset="UTF-8" 추가
