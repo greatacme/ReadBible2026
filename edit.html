@@ -160,7 +160,7 @@
     }
 
     // ── 기록 이전 ─────────────────────────────────────────────────────────
-    async function migrateRecords(userId, newPlanSetId) {
+    async function migrateRecords(userId, newPlanSetCd) {
       // 완료된 기록의 book, chapter_no 조회
       const { data: completed } = await sb.from('records')
         .select('plans(book, chapter_no)')
@@ -171,7 +171,7 @@
       // 새 plan_set의 plan_id 맵 { "책:장" → id }
       const { data: newPlans } = await sb.from('plans')
         .select('id, book, chapter_no')
-        .eq('plan_set_id', newPlanSetId)
+        .eq('plan_set_cd', newPlanSetCd)
       if (!newPlans) return
 
       const planMap = {}
@@ -221,21 +221,21 @@
         }
       }
 
-      // 그룹 변경 시 plan_set_id 비교
+      // 그룹 변경 시 plan_set_cd 비교
       if (newGroup !== groupCode) {
         const [{ data: oldGrp }, { data: newGrp }] = await Promise.all([
-          sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
-          sb.from('groups').select('plan_set_id').eq('group_code', newGroup).maybeSingle(),
+          sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
+          sb.from('groups').select('plan_set_cd').eq('group_code', newGroup).maybeSingle(),
         ])
-        const oldPlanSetId = oldGrp?.plan_set_id ?? 1
-        const newPlanSetId = newGrp?.plan_set_id ?? 1
+        const oldPlanSetCd = oldGrp?.plan_set_cd ?? '1'
+        const newPlanSetCd = newGrp?.plan_set_cd ?? '1'
 
-        if (oldPlanSetId !== newPlanSetId) {
+        if (oldPlanSetCd !== newPlanSetCd) {
           const choice = await showMigrateModal()
           if (choice === null) return  // 취소
 
           if (choice === true) {
-            await migrateRecords(user.id, newPlanSetId)
+            await migrateRecords(user.id, newPlanSetCd)
           } else {
             await sb.from('records').delete().eq('user_id', user.id)
           }

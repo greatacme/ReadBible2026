@@ -81,7 +81,7 @@
     if (!nickname || !book || !chapterNo || !groupCode) location.href = 'index.html'
 
     let userId           = null
-    let planSetId        = 1
+    let planSetCd        = '1'
     let bibleVerCd       = 'KJV'
     let scrolledToBottom = false
     let saveTimer        = null
@@ -139,8 +139,8 @@
     // ── 인접 계획 조회 ───────────────────────────────────────────────────
     async function loadAdjacentPlans() {
       const [prevRes, nextRes] = await Promise.all([
-        sb.from('plans').select('id,book,chapter_no,sort_order').eq('plan_set_id', planSetId).eq('sort_order', sortOrder - 1).maybeSingle(),
-        sb.from('plans').select('id,book,chapter_no,sort_order').eq('plan_set_id', planSetId).eq('sort_order', sortOrder + 1).maybeSingle()
+        sb.from('plans').select('id,book,chapter_no,sort_order').eq('plan_set_cd', planSetCd).eq('sort_order', sortOrder - 1).maybeSingle(),
+        sb.from('plans').select('id,book,chapter_no,sort_order').eq('plan_set_cd', planSetCd).eq('sort_order', sortOrder + 1).maybeSingle()
       ])
       prevPlan = prevRes.data
       nextPlan = nextRes.data
@@ -312,10 +312,10 @@
     async function init() {
       // groups + user 조회 병렬
       const [{ data: grp }, { data: user }] = await Promise.all([
-        sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
+        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
         sb.from('users').select('id, bible_ver_cd').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       ])
-      planSetId = grp?.plan_set_id ?? 1
+      planSetCd = grp?.plan_set_cd ?? '1'
 
       if (user) {
         userId = user.id

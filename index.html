@@ -99,7 +99,7 @@
       if (!groupCode) return
 
       const [{ data: grp }, { data, error }] = await Promise.all([
-        sb.from('groups').select('plan_set_id').eq('group_code', groupCode).maybeSingle(),
+        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
         sb.rpc('get_stats', { p_group_code: groupCode })
       ])
       if (!grp) { location.replace('home.html'); return }

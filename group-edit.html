@@ -99,12 +99,12 @@
       if (dup) { showError('이미 존재하는 그룹 코드입니다.'); return }
 
       // 그룹명 변경
-      const { data: oldGrp } = await sb.from('groups').select('plan_set_id')
+      const { data: oldGrp } = await sb.from('groups').select('plan_set_cd')
         .eq('group_code', groupCode).maybeSingle()
-      const planSetId = oldGrp?.plan_set_id ?? 1
+      const planSetCd = oldGrp?.plan_set_cd ?? '1'
 
       const { error: insertErr } = await sb.from('groups')
-        .insert({ group_code: newGroup, plan_set_id: planSetId })
+        .insert({ group_code: newGroup, plan_set_cd: planSetCd })
       if (insertErr) { showError('저장 중 오류가 발생했습니다.'); return }
 
       await sb.from('users').update({ group_code: newGroup }).eq('group_code', groupCode)
