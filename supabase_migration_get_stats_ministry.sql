@@ -1,54 +1,46 @@
 -- ============================================================
 -- get_stats() 함수 수정 - ministry 계층 지원
--- WITH 절 제거하고 서브쿼리로 변경
+-- get_stats_tmp()와 동일한 형식, 함수명만 변경
 -- ============================================================
 
-DROP FUNCTION IF EXISTS public.get_stats(text, text) CASCADE;
+DROP FUNCTION IF EXISTS public.get_stats(TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_stats(
-  p_group_code text,
-  p_ministry_cd text DEFAULT '0'
-)
-RETURNS TABLE(nickname text, completed bigint, planned bigint, rate numeric)
-LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION get_stats(p_group_code TEXT, p_ministry_cd TEXT DEFAULT '0')
+RETURNS TABLE(nickname TEXT, completed BIGINT, planned BIGINT, rate NUMERIC)
+LANGUAGE sql SECURITY DEFINER
 AS $$
-DECLARE
-  v_plan_set_cd text;
-  v_planned_cnt bigint;
-BEGIN
-  -- 1. plan_set_cd 조회
-  SELECT COALESCE(plan_set_cd, '1') INTO v_plan_set_cd
-  FROM public.groups
-  WHERE group_code = p_group_code AND ministry_cd = p_ministry_cd
-  LIMIT 1;
-
-  -- 2. plan_set_cd 기본값 처리
-  IF v_plan_set_cd IS NULL THEN
-    v_plan_set_cd := '1';
-  END IF;
-
-  -- 3. planned_cnt 계산
-  SELECT COUNT(*) INTO v_planned_cnt
-  FROM public.plans
-  WHERE plan_set_cd = v_plan_set_cd
-    AND date <= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE;
-
-  -- 4. 결과 반환
-  RETURN QUERY
-  SELECT
-    u.nickname,
-    COUNT(r.id) FILTER (WHERE r.completed = true)::bigint,
-    v_planned_cnt::bigint,
-    CASE WHEN v_planned_cnt > 0
-         THEN ROUND(COUNT(r.id) FILTER (WHERE r.completed = true)::numeric / v_planned_cnt::numeric * 100, 1)
-         ELSE 0
-    END
-  FROM public.users u
-  LEFT JOIN public.records r ON r.user_id = u.id
-  WHERE u.group_code = p_group_code AND u.ministry_cd = p_ministry_cd
-  GROUP BY u.id, u.nickname, u.created_at
-  ORDER BY 4 DESC, MAX(r.updated_at) FILTER (WHERE r.completed = true) ASC;
-END
+  WITH grp AS (
+    SELECT COALESCE(
+      (SELECT plan_set_cd FROM public.groups
+       WHERE group_code = p_group_code AND ministry_cd = p_ministry_cd),
+      '1'
+    ) AS plan_set_cd
+  ),
+  planned_cnt AS (
+    SELECT COUNT(*) AS cnt
+    FROM public.plans, grp
+    WHERE public.plans.plan_set_cd = grp.plan_set_cd
+      AND public.plans.date <= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE
+  ),
+  user_done AS (
+    SELECT u.nickname,
+           u.created_at,
+           MAX(r.updated_at) FILTER (WHERE r.completed = true) AS first_record_at,
+           COUNT(r.id) FILTER (WHERE r.completed = true) AS done
+    FROM public.users u
+    LEFT JOIN public.records r ON r.user_id = u.id
+    WHERE u.group_code = p_group_code AND u.ministry_cd = p_ministry_cd
+    GROUP BY u.id, u.nickname, u.created_at
+  )
+  SELECT ud.nickname,
+         ud.done,
+         pc.cnt,
+         CASE WHEN pc.cnt > 0
+              THEN ROUND(ud.done::NUMERIC / pc.cnt * 100, 1)
+              ELSE 0
+         END AS rate
+  FROM user_done ud, planned_cnt pc
+  ORDER BY rate DESC, COALESCE(ud.first_record_at, ud.created_at) ASC;
 $$;
 
 -- 실행 후 정리 작업:
