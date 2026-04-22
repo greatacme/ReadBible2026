@@ -313,8 +313,8 @@
     async function init() {
       // groups + user 조회 병렬
       const [{ data: grp }, { data: user }] = await Promise.all([
-        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).maybeSingle(),
-        sb.from('users').select('id, bible_ver_cd').eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
+        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
+        sb.from('users').select('id, bible_ver_cd').eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
       ])
       planSetCd = grp?.plan_set_cd ?? '1'
 
