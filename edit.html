@@ -116,6 +116,7 @@
     // 그룹 목록 로드
     async function loadGroups() {
       const { data: groups } = await sb.from('groups').select('group_code')
+        .eq('ministry_cd', ministryCode)
       if (!groups) return
       groups.sort((a, b) => a.group_code.localeCompare(b.group_code, 'ko', { numeric: true }))
       const sel = document.getElementById('inputGroup')
