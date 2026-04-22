@@ -7,6 +7,14 @@
 
 ---
 
+## ver.3.7.2026.0422
+- feat: 헤더에 ministry별 제목 표시
+  - COMM_CODE 테이블에서 ministry code_nm 조회
+  - 각 ministry마다 다른 제목 표시 (예: "연세대학교회", "제1청장년" 등)
+- fix: 프로필 편집, 성경 읽기에서 ministry 필터링 추가
+  - edit.html: 그룹 선택 시 ministry 필터링
+  - bible.html: 그룹/사용자 조회 시 ministry 필터링
+
 ## ver.3.6.2026.0422
 - feat: ministry 계층 완전 적용
   - get_stats() 함수: ministry_cd 파라미터 추가
