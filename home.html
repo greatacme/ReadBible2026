@@ -10,7 +10,7 @@
 <body class="bg-slate-100 min-h-screen">
 
   <header class="bg-blue-900 text-white py-6 shadow-lg">
-    <h1 class="text-2xl font-bold tracking-wide text-center">✝ 2026년 연세대학교회 성경통독</h1>
+    <h1 id="siteTitle" class="text-2xl font-bold tracking-wide text-center">✝ 2026년 연세대학교회 성경통독</h1>
     <div class="flex items-center mt-1 px-4">
       <div class="flex-1"></div>
       <p class="text-blue-300 text-base">그룹을 선택하세요</p>
@@ -64,6 +64,15 @@
     )
 
     const ministryCode = new URLSearchParams(location.search).get('ministry') || '0'
+
+    async function loadTitle() {
+      const { data: ministry } = await sb.from('COMM_CODE').select('code_nm')
+        .eq('code_group', 'MINISTRY').eq('code_cd', ministryCode).maybeSingle()
+      if (ministry?.code_nm) {
+        document.getElementById('siteTitle').textContent = `✝ 2026년 ${ministry.code_nm} 성경통독`
+      }
+    }
+    loadTitle()
 
     async function loadGroups() {
       const { data: groups } = await sb.from('groups').select('group_code')

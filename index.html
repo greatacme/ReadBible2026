@@ -80,7 +80,16 @@
     const planSetId  = parseInt(new URLSearchParams(location.search).get('plan')) || 1
     const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}` : ''
 
+    async function loadTitle() {
+      const { data: ministry } = await sb.from('COMM_CODE').select('code_nm')
+        .eq('code_group', 'MINISTRY').eq('code_cd', ministryCode).maybeSingle()
+      if (ministry?.code_nm) {
+        document.getElementById('siteTitle').textContent = `✝ 2026년 ${ministry.code_nm} 성경통독`
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      loadTitle()
       if (!groupCode) {
         location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`)
         return
