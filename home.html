@@ -188,8 +188,8 @@
       // 모달 닫기
       document.getElementById('createModal').classList.add('hidden')
 
-      // 그룹 링크 복사 및 모달 표시
-      const url = `${location.origin}${location.pathname}?group=${encodeURIComponent(newGroup.group_code)}&ministry=${encodeURIComponent(ministryCode)}`
+      // 그룹 링크 복사 및 모달 표시 (index.html로 공유)
+      const url = `${location.origin}${location.pathname.replace('home.html', 'index.html')}?group=${encodeURIComponent(newGroup.group_code)}&ministry=${encodeURIComponent(ministryCode)}`
       await navigator.clipboard.writeText(url)
       document.getElementById('copyModal').classList.remove('hidden')
       document.getElementById('copyModalOkBtn').onclick = () => { location.href = url }
