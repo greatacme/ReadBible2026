@@ -105,18 +105,18 @@
       return /^[\p{L}\p{N}\p{M}\s\-_.()]+$/u.test(text)
     }
 
-    function openCreateModal() {
+    async function openCreateModal() {
       document.getElementById('newGroupName').value = ''
       document.getElementById('createError').classList.add('hidden')
       document.getElementById('createModal').classList.remove('hidden')
-      document.getElementById('newGroupCode').focus()
-      loadPlanOptions()
+      document.getElementById('newGroupName').focus()
+      await loadPlanOptions()
     }
 
     async function loadPlanOptions() {
       const { data } = await sb.from('COMM_CODE')
         .select('code_cd, code_nm')
-        .eq('code_group', 'plan')
+        .eq('code_group', 'plan_set')
         .order('code_cd')
       const sel = document.getElementById('newPlanSetCd')
       sel.innerHTML = (data || []).map(r =>
