@@ -116,7 +116,7 @@
     async function loadPlanOptions() {
       const { data } = await sb.from('COMM_CODE')
         .select('code_cd, code_nm')
-        .eq('code_group', 'plan_set')
+        .eq('code_group', 'plan')
         .order('code_cd')
       const sel = document.getElementById('newPlanSetCd')
       sel.innerHTML = (data || []).map(r =>
