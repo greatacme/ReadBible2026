@@ -19,7 +19,7 @@
       <div class="bg-white rounded-2xl shadow p-5 space-y-5">
 
         <div>
-          <label class="block text-sm font-semibold text-gray-600 mb-1">그룹 코드</label>
+          <label class="block text-sm font-semibold text-gray-600 mb-1">그룹명</label>
           <input id="inputGroup" type="text"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
         </div>
@@ -65,7 +65,16 @@
     const ministryCode = params.get('ministry') || '0'
     if (!groupCode) location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
 
-    document.getElementById('inputGroup').value = groupCode
+    // 그룹명 조회해서 초기화
+    async function loadGroupName() {
+      const { data: grp } = await sb.from('groups').select('group_nm')
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+      if (grp?.group_nm) {
+        document.getElementById('inputGroup').value = grp.group_nm
+      }
+    }
+    loadGroupName()
+
     document.getElementById('backBtn').onclick = () =>
       location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
@@ -82,36 +91,19 @@
     }
 
     document.getElementById('saveBtn').onclick = async () => {
-      const newGroup = document.getElementById('inputGroup').value.trim()
+      const newGroupName = document.getElementById('inputGroup').value.trim()
       document.getElementById('errorMsg').classList.add('hidden')
 
-      if (!newGroup) { showError('그룹 코드를 입력해주세요.'); return }
-      if (!isValidGroupCode(newGroup)) { showError('한글, 영문, 숫자, 공백, 기호(-_.())만 사용 가능합니다'); return }
+      if (!newGroupName) { showError('그룹명을 입력해주세요.'); return }
+      if (!isValidGroupCode(newGroupName)) { showError('한글, 영문, 숫자, 공백, 기호(-_.())만 사용 가능합니다'); return }
 
-      // 변경 없는 경우
-      if (newGroup === groupCode) {
-        location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
-        return
-      }
+      // 그룹명 변경 (group_code는 불변)
+      const { error } = await sb.from('groups')
+        .update({ group_nm: newGroupName })
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode)
+      if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
-      // 중복 확인
-      const { data: dup } = await sb.from('groups').select('group_code')
-        .eq('group_code', newGroup).eq('ministry_cd', ministryCode).maybeSingle()
-      if (dup) { showError('이미 존재하는 그룹 코드입니다.'); return }
-
-      // 그룹명 변경
-      const { data: oldGrp } = await sb.from('groups').select('plan_set_cd')
-        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
-      const planSetCd = oldGrp?.plan_set_cd ?? '1'
-
-      const { error: insertErr } = await sb.from('groups')
-        .insert({ group_code: newGroup, plan_set_cd: planSetCd, ministry_cd: ministryCode })
-      if (insertErr) { showError('저장 중 오류가 발생했습니다.'); return }
-
-      await sb.from('users').update({ group_code: newGroup }).eq('group_code', groupCode).eq('ministry_cd', ministryCode)
-      await sb.from('groups').delete().eq('group_code', groupCode).eq('ministry_cd', ministryCode)
-
-      const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(newGroup)}&ministry=${encodeURIComponent(ministryCode)}`
+      const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
       await navigator.clipboard.writeText(url)
 
       document.getElementById('copyModal').classList.remove('hidden')
