@@ -88,13 +88,21 @@
       }
     }
 
+    async function loadGroupInfo() {
+      const { data: grp } = await sb.from('groups').select('group_nm')
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+      if (grp?.group_nm) {
+        document.getElementById('siteSubtitle').textContent = `${grp.group_nm} group`
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       loadTitle()
       if (!groupCode) {
         location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`)
         return
       } else {
-        document.getElementById('siteSubtitle').textContent = `${groupCode} group`
+        loadGroupInfo()
         const editBtn = document.getElementById('groupEditBtn')
         editBtn.href = `group-edit.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
         editBtn.classList.remove('hidden')
