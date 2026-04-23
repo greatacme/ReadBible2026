@@ -65,6 +65,14 @@
     const ministryCode = params.get('ministry') || '0'
     if (!groupCode) location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
 
+    // 그룹/미니스트리 존재 여부 검증
+    async function validateGroup() {
+      const { data: grp } = await sb.from('groups').select('group_code')
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+      if (!grp) location.href = `home.html?ministry=${encodeURIComponent(ministryCode)}`
+    }
+    validateGroup()
+
     // 그룹명 조회해서 초기화
     async function loadGroupName() {
       const { data: grp } = await sb.from('groups').select('group_nm')

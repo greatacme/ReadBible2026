@@ -81,6 +81,14 @@
 
     if (!nickname || !book || !chapterNo || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
 
+    // 그룹/미니스트리 존재 여부 검증
+    async function validateGroup() {
+      const { data: grp } = await sb.from('groups').select('group_code')
+        .eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+      if (!grp) location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
+    }
+    validateGroup()
+
     let userId           = null
     let planSetCd        = '1'
     let bibleVerCd       = 'KJV'
