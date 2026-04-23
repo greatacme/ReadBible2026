@@ -103,11 +103,7 @@
         .eq('group_code', groupCode).eq('ministry_cd', ministryCode)
       if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
-      const url = `${location.origin}${location.pathname.replace('group-edit.html', 'index.html')}?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
-      await navigator.clipboard.writeText(url)
-
-      document.getElementById('copyModal').classList.remove('hidden')
-      document.getElementById('copyModalOkBtn').onclick = () => { location.href = url }
+      location.href = `index.html?group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
     }
 
     document.getElementById('inputGroup').addEventListener('keydown', e => {
