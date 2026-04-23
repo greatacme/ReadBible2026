@@ -7,6 +7,13 @@
 
 ---
 
+## ver.3.8.2026.0423
+- feat: 그룹 코드/명 분리 (group_code: 불변 ID, group_nm: 명칭)
+  - group_code: 'G0001' 형식으로 자동 채번
+  - group_nm: 그룹명으로 사용자 변경 가능
+  - 그룹명 변경 시 URL 안정성 보장
+- fix: 프로필 편집에서 그룹 드롭다운에 group_nm 표시
+
 ## ver.3.7.2026.0422
 - feat: 헤더에 ministry별 제목 표시
   - COMM_CODE 테이블에서 ministry code_nm 조회
