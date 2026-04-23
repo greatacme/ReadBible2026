@@ -75,7 +75,7 @@
     loadTitle()
 
     async function loadGroups() {
-      const { data: groups } = await sb.from('groups').select('group_code')
+      const { data: groups } = await sb.from('groups').select('group_code, group_nm')
         .eq('ministry_cd', ministryCode)
       if (groups) groups.sort((a, b) =>
         a.group_code.localeCompare(b.group_code, 'ko', { numeric: true })
@@ -93,7 +93,7 @@
             <button onclick="location.href='index.html?group=${encodeURIComponent(g.group_code)}&ministry=${encodeURIComponent(ministryCode)}'"
               class="bg-white hover:bg-blue-700 hover:text-white text-gray-800 font-semibold
                      px-4 py-2 rounded-xl shadow text-sm transition">
-              ${g.group_code}
+              ${g.group_nm}
             </button>
           `).join('')}
         </div>`
