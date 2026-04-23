@@ -115,13 +115,13 @@
 
     // 그룹 목록 로드
     async function loadGroups() {
-      const { data: groups } = await sb.from('groups').select('group_code')
+      const { data: groups } = await sb.from('groups').select('group_code, group_nm')
         .eq('ministry_cd', ministryCode)
       if (!groups) return
       groups.sort((a, b) => a.group_code.localeCompare(b.group_code, 'ko', { numeric: true }))
       const sel = document.getElementById('inputGroup')
       sel.innerHTML = groups.map(g =>
-        `<option value="${g.group_code}" ${g.group_code === groupCode ? 'selected' : ''}>${g.group_code}</option>`
+        `<option value="${g.group_code}" ${g.group_code === groupCode ? 'selected' : ''}>${g.group_nm}</option>`
       ).join('')
     }
     loadGroups()
@@ -206,7 +206,7 @@
 
       if (!newNickname) { showError('닉네임을 입력해주세요.'); return }
       if (!isValidNickname(newNickname)) { showError('한글, 영문, 숫자, 공백, 기호(-_.())만 사용 가능합니다'); return }
-      if (!newGroup)    { showError('그룹 코드를 입력해주세요.'); return }
+      if (!newGroup)    { showError('그룹을 선택해주세요.'); return }
 
       // 현재 사용자 조회
       const { data: user } = await sb.from('users').select('id')
