@@ -117,11 +117,11 @@
       if (!groupCode) return
 
       const [{ data: grp }, { data, error }] = await Promise.all([
-        sb.from('groups').select('plan_set_cd').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
+        sb.from('groups').select('plan_set_cd, group_nm').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
         sb.rpc('get_stats', { p_group_code: groupCode, p_ministry_cd: ministryCode })
       ])
       if (!grp) { location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`); return }
-      document.getElementById('siteSubtitle').textContent = `${groupCode} group`
+      document.getElementById('siteSubtitle').textContent = `${grp.group_nm} group`
       document.getElementById('chartLoading').classList.add('hidden')
 
       if (error || !data || data.length === 0) {
