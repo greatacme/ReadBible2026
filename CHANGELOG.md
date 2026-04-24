@@ -7,6 +7,12 @@
 
 ---
 
+## ver.3.9.2026.0424
+- feat: 그룹/미니스트리 존재 여부 검증
+  - 존재하지 않는 그룹 접근 방지 (orphaned URL 차단)
+  - record.html, bible.html, edit.html, group-edit.html에 validateGroup() 추가
+  - 존재하지 않는 그룹으로의 직접 URL 접근 시 안전한 페이지로 리디렉션
+
 ## ver.3.8.2026.0423
 - feat: 그룹 코드/명 분리 (group_code: 불변 ID, group_nm: 명칭)
   - group_code: 'G0001' 형식으로 자동 채번
