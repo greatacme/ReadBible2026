@@ -77,6 +77,16 @@
 
     const ministryCode = new URLSearchParams(location.search).get('ministry') || '0'
 
+    async function validateMinistry() {
+      if (ministryCode === '0') return
+      const { data: ministry } = await sb.from('COMM_CODE').select('code_cd')
+        .eq('code_group', 'ministry').eq('code_cd', ministryCode).maybeSingle()
+      if (!ministry) {
+        location.href = `home.html?ministry=0`
+      }
+    }
+    validateMinistry()
+
     async function loadTitle() {
       const { data: ministry } = await sb.from('COMM_CODE').select('code_nm')
         .eq('code_group', 'ministry').eq('code_cd', ministryCode).maybeSingle()
