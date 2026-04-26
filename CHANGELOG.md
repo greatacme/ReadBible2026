@@ -7,6 +7,12 @@
 
 ---
 
+## ver.3.10.2026.0426
+- feat: 헤더 제목을 ministry code_nm으로 표시
+  - 기본값: "✝ 2026 성경통독"
+  - ministry가 있을 경우: "✝ {ministry.code_nm}" (예: "✝ 연세대학교회")
+  - home.html, index.html 제목 개선
+
 ## ver.3.9.2026.0424
 - feat: 그룹/미니스트리 존재 여부 검증
   - 존재하지 않는 그룹 접근 방지 (orphaned URL 차단)

@@ -11,7 +11,7 @@
 <body class="bg-slate-100 min-h-screen">
 
   <header class="bg-blue-900 text-white py-6 shadow-lg">
-    <h1 id="siteTitle" class="text-2xl font-bold tracking-wide text-center">✝ 2026년 연세대학교회 성경통독</h1>
+    <h1 id="siteTitle" class="text-2xl font-bold tracking-wide text-center">✝ 2026 성경통독</h1>
     <div class="flex items-center mt-1 px-4">
       <div class="flex-1 flex items-center">
         <a id="homeBtn" class="text-blue-400 hover:text-white text-sm whitespace-nowrap cursor-pointer">🏠 홈</a>
@@ -83,9 +83,8 @@
     async function loadTitle() {
       const { data: ministry } = await sb.from('COMM_CODE').select('code_nm')
         .eq('code_group', 'ministry').eq('code_cd', ministryCode).maybeSingle()
-      if (ministry?.code_nm) {
-        document.getElementById('siteTitle').textContent = `✝ 2026년 ${ministry.code_nm} 성경통독`
-      }
+      const titleText = ministry?.code_nm ? `✝ ${ministry.code_nm}` : `✝ 2026 성경통독`
+      document.getElementById('siteTitle').textContent = titleText
     }
 
     async function loadGroupInfo() {
