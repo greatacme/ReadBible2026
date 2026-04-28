@@ -115,6 +115,11 @@
     async function loadStats() {
       if (!groupCode) return
 
+      const savedTopCount = localStorage.getItem(`topCount_${groupCode}`)
+      if (savedTopCount) {
+        document.getElementById('topCount').value = savedTopCount
+      }
+
       const [{ data: grp }, { data, error }] = await Promise.all([
         sb.from('groups').select('plan_set_cd, group_nm').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
         sb.rpc('get_stats', { p_group_code: groupCode, p_ministry_cd: ministryCode })
@@ -139,6 +144,7 @@
     function onTopCountChange() {
       if (!allStats.length) return
       const topN = parseInt(document.getElementById('topCount').value)
+      localStorage.setItem(`topCount_${groupCode}`, topN)
       renderChart(allStats.slice(0, topN))
     }
 

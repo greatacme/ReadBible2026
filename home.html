@@ -36,6 +36,11 @@
           <option value="">불러오는 중...</option>
         </select>
       </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">암호</label>
+        <input id="newGroupPassword" type="password" placeholder="196FA"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      </div>
       <p id="createError" class="text-red-500 text-xs hidden"></p>
       <div class="flex gap-2">
         <button id="createCancelBtn" type="button"
@@ -128,7 +133,10 @@
 
     async function openCreateModal() {
       document.getElementById('newGroupName').value = ''
+      document.getElementById('newGroupPassword').value = ''
       document.getElementById('createError').classList.add('hidden')
+      document.getElementById('createConfirmBtn').disabled = true
+      document.getElementById('createConfirmBtn').classList.add('opacity-50', 'cursor-not-allowed')
       document.getElementById('createModal').classList.remove('hidden')
       document.getElementById('newGroupName').focus()
       await loadPlanOptions()
@@ -145,12 +153,30 @@
       ).join('')
     }
 
+    const PASSWORD = '7183'
+
+    function checkPassword() {
+      const password = document.getElementById('newGroupPassword').value
+      const isValid = password === PASSWORD
+      const btn = document.getElementById('createConfirmBtn')
+      if (isValid) {
+        btn.disabled = false
+        btn.classList.remove('opacity-50', 'cursor-not-allowed')
+      } else {
+        btn.disabled = true
+        btn.classList.add('opacity-50', 'cursor-not-allowed')
+      }
+    }
+
+    document.getElementById('newGroupPassword').addEventListener('input', checkPassword)
+
     document.getElementById('createCancelBtn').onclick = () =>
       document.getElementById('createModal').classList.add('hidden')
 
     document.getElementById('createConfirmBtn').onclick = async () => {
       const groupName  = document.getElementById('newGroupName').value.trim()
       const planSetCd  = document.getElementById('newPlanSetCd').value
+      const password   = document.getElementById('newGroupPassword').value
       const errEl      = document.getElementById('createError')
 
       errEl.classList.add('hidden')
@@ -169,6 +195,12 @@
 
       if (!planSetCd) {
         errEl.textContent = '플랜을 선택해주세요.'
+        errEl.classList.remove('hidden')
+        return
+      }
+
+      if (password !== PASSWORD) {
+        errEl.textContent = '암호가 일치하지 않습니다.'
         errEl.classList.remove('hidden')
         return
       }
@@ -210,7 +242,7 @@
 
     loadGroups()
   </script>
-  <footer class="fixed bottom-3 right-4 text-gray-400 text-xs">ver.3.10.2026.0426</footer>
+  <footer class="fixed bottom-3 right-4 text-gray-400 text-xs">ver.3.10.2026.0429</footer>
 
 </body>
 </html>
