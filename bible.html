@@ -267,6 +267,10 @@
           return
         }
 
+        // 원본 HTML 콘솔에 출력 (디버그용)
+        console.log(`[${book} ${chapterNo}장] YouVersion API 원본 HTML:`)
+        console.log(data.content)
+
         // HTML을 파싱해서 절 단위로 분리
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
