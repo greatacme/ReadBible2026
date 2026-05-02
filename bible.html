@@ -366,7 +366,8 @@
           }
 
           walk(htmlDoc.body)
-          text = text.replace(/\s+/g, ' ').trim()
+          // 개행은 유지, 불필요한 공백만 정리
+          text = text.replace(/[ \t\n]*\n[ \t\n]*/g, '\n').replace(/[ \t]+/g, ' ').trim()
 
           console.log(`절 ${verseNo}: ${textNodeCount}개 노드, "${text.substring(0, 50)}..."`)
 
@@ -399,7 +400,7 @@
         ${verses.map(v => `
           <div class="flex gap-3 mb-3">
             <span class="text-blue-400 text-xs font-bold w-5 flex-shrink-0 pt-1">${v.verse}</span>
-            <p class="text-gray-800 text-sm leading-7">${v.text}</p>
+            <p class="text-gray-800 text-sm leading-7">${v.text.replace(/\n/g, '<br>')}</p>
           </div>
         `).join('')}
       `
