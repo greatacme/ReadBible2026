@@ -337,7 +337,11 @@
             if (node === nextLabel) return 'stop'
 
             // 수집 시작
-            if (node === label) foundStart = true
+            if (node === label) {
+              foundStart = true
+              // label 자신의 자식(절 번호)은 순회하지 않음
+              return null
+            }
 
             // 수집 중: TEXT_NODE만 추가
             if (foundStart && node.nodeType === Node.TEXT_NODE) {
