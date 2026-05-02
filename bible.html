@@ -328,24 +328,47 @@
 
           const nextLabel = verseLabels[idx + 1]
           let text = ''
+          let collecting = false
 
-          // label 바로 다음 형제부터 시작
-          let node = label.nextSibling
-          while (node) {
-            if (nextLabel && node === nextLabel) break
-            if (nextLabel && node.contains && node.contains(nextLabel)) break
+          // label부터 시작해서 깊이 우선 순회
+          function walk(node) {
+            // 다음 절 번호를 만났으면 종료
+            if (node === nextLabel) return true
+            if (nextLabel && node.contains && node.contains(nextLabel)) {
+              // nextLabel을 포함하면 스킵하되, 형제는 계속 봄
+            }
 
-            if (node.nodeType === Node.TEXT_NODE) {
-              text += node.textContent
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-              // 요소의 직접 텍스트만 (자식 중복 방지)
-              if (!node.contains(nextLabel)) {
+            if (collecting && node !== label) {
+              if (node.nodeType === Node.TEXT_NODE) {
                 text += node.textContent
+              } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // 요소가 nextLabel을 포함하지 않으면 전체 텍스트 추가
+                if (!node.contains(nextLabel)) {
+                  text += node.textContent
+                }
               }
             }
-            node = node.nextSibling
+
+            if (node === label) collecting = true
+
+            // 자식 노드 순회
+            for (const child of node.childNodes) {
+              if (walk(child)) return true
+            }
+
+            // label의 부모 이후 형제들도 순회
+            if (node === label.parentElement && label.parentElement) {
+              let sibling = node.nextElementSibling
+              while (sibling) {
+                if (walk(sibling)) return true
+                sibling = sibling.nextElementSibling
+              }
+            }
+
+            return false
           }
 
+          walk(label)
           text = text.replace(/[\n\s]+/g, ' ').trim()
 
           if (text) {
