@@ -343,10 +343,14 @@
               return null
             }
 
-            // 수집 중: TEXT_NODE만 추가
+            // 수집 중: TEXT_NODE만 추가 (요소 경계에 스페이스 보장)
             if (foundStart && node.nodeType === Node.TEXT_NODE) {
-              const content = node.textContent
-              if (content.trim()) {
+              const content = node.textContent.trim()
+              if (content) {
+                // 이전 텍스트와 현재 텍스트 사이에 스페이스 추가
+                if (text && !text.endsWith(' ')) {
+                  text += ' '
+                }
                 text += content
                 textNodeCount++
               }
