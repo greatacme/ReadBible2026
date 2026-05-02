@@ -329,23 +329,23 @@
           const nextLabel = verseLabels[idx + 1]
           let text = ''
           let foundStart = false
+          let textNodeCount = 0
 
           // body 전체를 깊이 우선 순회, label부터 nextLabel 전까지 TEXT_NODE만 수집
           function walk(node) {
             // 다음 절 번호를 만나면 중단
             if (node === nextLabel) return 'stop'
 
-            // 다음 절 번호를 포함하는 요소는 순회하지 않음
-            if (node.nodeType === Node.ELEMENT_NODE && nextLabel && node.contains(nextLabel)) {
-              return null
-            }
-
             // 수집 시작
             if (node === label) foundStart = true
 
-            // 수집 중: TEXT_NODE만 추가 (중복 방지)
-            if (foundStart && node !== label && node.nodeType === Node.TEXT_NODE) {
-              text += node.textContent
+            // 수집 중: TEXT_NODE만 추가
+            if (foundStart && node.nodeType === Node.TEXT_NODE) {
+              const content = node.textContent
+              if (content.trim()) {
+                text += content
+                textNodeCount++
+              }
             }
 
             // 자식 순회
@@ -359,6 +359,8 @@
 
           walk(htmlDoc.body)
           text = text.replace(/\s+/g, ' ').trim()
+
+          console.log(`절 ${verseNo}: ${textNodeCount}개 노드, "${text.substring(0, 50)}..."`)
 
           if (text) {
             verses.push({
