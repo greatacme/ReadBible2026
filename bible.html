@@ -267,10 +267,6 @@
           return
         }
 
-        // 원본 HTML 콘솔에 출력 (디버그용)
-        console.log(`[${book} ${chapterNo}장] YouVersion API 원본 HTML:`)
-        console.log(data.content)
-
         // HTML을 파싱해서 절 단위로 분리
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
@@ -333,7 +329,6 @@
           const nextLabel = verseLabels[idx + 1]
           let text = ''
           let foundStart = false
-          let textNodeCount = 0
 
           // body 전체를 깊이 우선 순회, label부터 nextLabel 전까지 TEXT_NODE만 수집
           function walk(node) {
@@ -356,7 +351,6 @@
                   text += ' '
                 }
                 text += content
-                textNodeCount++
               }
             }
 
@@ -372,8 +366,6 @@
           walk(htmlDoc.body)
           // 개행은 유지, 불필요한 공백만 정리
           text = text.replace(/[ \t\n]*\n[ \t\n]*/g, '\n').replace(/[ \t]+/g, ' ').trim()
-
-          console.log(`절 ${verseNo}: ${textNodeCount}개 노드, "${text.substring(0, 50)}..."`)
 
           if (text) {
             verses.push({
