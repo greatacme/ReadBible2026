@@ -268,7 +268,6 @@
         }
 
         // HTML을 파싱해서 절 단위로 분리
-        // 절 번호 span(yv-vlbl)을 찾아서 부모 요소부터 다음 절까지의 텍스트 추출
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
 
@@ -282,26 +281,32 @@
 
           if (!verseNo) return
 
-          // 절 번호 span부터 다음 절 번호 span(또는 끝)까지의 텍스트 수집
+          // 절 번호 span의 부모 div부터 다음 절 번호 span의 부모 div 이전까지 수집
           let text = ''
-          let node = label.nextSibling
+          const labelParent = label.closest('div')
           const nextLabel = verseLabels[idx + 1]
+          const nextLabelParent = nextLabel?.closest('div')
 
-          while (node && node !== nextLabel) {
+          // 현재 div에서 절 번호 span 이후부터 모든 텍스트
+          let node = label.nextSibling
+          while (node && labelParent.contains(node)) {
             if (node.nodeType === Node.TEXT_NODE) {
               text += node.textContent
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-              // span 태그는 스킵하고 하위 텍스트만 추출
-              if (node.tagName === 'SPAN') {
-                text += node.textContent
-              } else {
-                text += node.textContent
-              }
+              text += node.textContent
             }
             node = node.nextSibling
           }
 
-          text = text.trim()
+          // 다음 div들을 순회 (다음 절 번호 span 부모까지)
+          let currentDiv = labelParent?.nextElementSibling
+          while (currentDiv && currentDiv !== nextLabelParent && currentDiv.nodeType === Node.ELEMENT_NODE) {
+            if (currentDiv.contains(nextLabel)) break
+            text += currentDiv.textContent
+            currentDiv = currentDiv.nextElementSibling
+          }
+
+          text = text.replace(/[\n\s]+/g, ' ').trim()
 
           if (text) {
             verses.push({
