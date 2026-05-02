@@ -328,48 +328,48 @@
 
           const nextLabel = verseLabels[idx + 1]
           let text = ''
-          let collecting = false
+          let foundStart = false
 
-          // label부터 시작해서 깊이 우선 순회
+          // body 전체를 깊이 우선 순회하되, label부터 nextLabel 직전까지만 수집
           function walk(node) {
-            // 다음 절 번호를 만났으면 종료
-            if (node === nextLabel) return true
-            if (nextLabel && node.contains && node.contains(nextLabel)) {
-              // nextLabel을 포함하면 스킵하되, 형제는 계속 봄
+            // 다음 절 번호 span을 만나면 중단
+            if (node === nextLabel) {
+              return 'stop'
             }
 
-            if (collecting && node !== label) {
+            // 수집 시작: label을 만나면
+            if (node === label) {
+              foundStart = true
+            }
+
+            // 수집 중: 텍스트와 요소 내용 추가
+            if (foundStart && node !== label && node !== nextLabel) {
               if (node.nodeType === Node.TEXT_NODE) {
                 text += node.textContent
               } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // 요소가 nextLabel을 포함하지 않으면 전체 텍스트 추가
+                // 다음 절 번호를 포함하지 않으면 텍스트만 추출
                 if (!node.contains(nextLabel)) {
-                  text += node.textContent
+                  // 직접 텍스트만 (자식은 별도로 순회)
+                  for (const child of node.childNodes) {
+                    if (child.nodeType === Node.TEXT_NODE) {
+                      text += child.textContent
+                    }
+                  }
                 }
               }
             }
 
-            if (node === label) collecting = true
-
-            // 자식 노드 순회
+            // 자식 순회
             for (const child of node.childNodes) {
-              if (walk(child)) return true
+              const result = walk(child)
+              if (result === 'stop') return 'stop'
             }
 
-            // label의 부모 이후 형제들도 순회
-            if (node === label.parentElement && label.parentElement) {
-              let sibling = node.nextElementSibling
-              while (sibling) {
-                if (walk(sibling)) return true
-                sibling = sibling.nextElementSibling
-              }
-            }
-
-            return false
+            return null
           }
 
-          walk(label)
-          text = text.replace(/[\n\s]+/g, ' ').trim()
+          walk(htmlDoc.body)
+          text = text.replace(/\s+/g, ' ').trim()
 
           if (text) {
             verses.push({
