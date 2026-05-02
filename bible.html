@@ -328,20 +328,23 @@
 
           const nextLabel = verseLabels[idx + 1]
           let text = ''
+          let foundStart = false
 
-          // label의 다음 형제부터 nextLabel 직전까지 수집
+          // body 전체를 깊이 우선 순회, label부터 nextLabel 전까지 TEXT_NODE만 수집
           function walk(node) {
             // 다음 절 번호를 만나면 중단
             if (node === nextLabel) return 'stop'
 
-            if (node.nodeType === Node.TEXT_NODE) {
-              text += node.textContent
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-              // 다음 절 번호를 포함하면 스킵
-              if (node.contains(nextLabel)) {
-                return null
-              }
-              // 요소의 textContent 추가
+            // 다음 절 번호를 포함하는 요소는 순회하지 않음
+            if (node.nodeType === Node.ELEMENT_NODE && nextLabel && node.contains(nextLabel)) {
+              return null
+            }
+
+            // 수집 시작
+            if (node === label) foundStart = true
+
+            // 수집 중: TEXT_NODE만 추가 (중복 방지)
+            if (foundStart && node !== label && node.nodeType === Node.TEXT_NODE) {
               text += node.textContent
             }
 
@@ -354,14 +357,7 @@
             return null
           }
 
-          // label의 nextSibling부터 시작
-          let node = label.nextSibling
-          while (node) {
-            const result = walk(node)
-            if (result === 'stop') break
-            node = node.nextSibling
-          }
-
+          walk(htmlDoc.body)
           text = text.replace(/\s+/g, ' ').trim()
 
           if (text) {
