@@ -278,16 +278,16 @@
           const verseLabel = el.querySelector('span.yv-vlbl')?.textContent || ''
           const verseNo = parseInt(verseLabel.split('-')[0]) // "1" 또는 "6-7" 형태 대비
 
+          if (!verseNo) return
+
           // 절 번호 span들 제거 후 텍스트만 추출
           el.querySelectorAll('span').forEach(s => s.remove())
           const text = el.textContent.trim()
 
-          if (verseNo && text) {
-            verses.push({
-              verse: verseNo,
-              text: text
-            })
-          }
+          verses.push({
+            verse: verseNo,
+            text: text || '[본문 없음]'
+          })
         })
 
         if (verses.length === 0) {
