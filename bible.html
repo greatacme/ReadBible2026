@@ -268,26 +268,47 @@
         }
 
         // HTML을 파싱해서 절 단위로 분리
-        // 구조: <div class="p"><span class="yv-v" v="1"></span><span class="yv-vlbl">1</span>텍스트</div>
+        // 절 번호 span(yv-vlbl)을 찾아서 부모 요소부터 다음 절까지의 텍스트 추출
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
-        const verseElements = htmlDoc.querySelectorAll('div.p')
 
+        // span.yv-vlbl (절 번호)들을 찾아서 절별로 그룹화
+        const verseLabels = Array.from(htmlDoc.querySelectorAll('span.yv-vlbl'))
         const verses = []
-        verseElements.forEach(el => {
-          const verseLabel = el.querySelector('span.yv-vlbl')?.textContent || ''
-          const verseNo = parseInt(verseLabel.split('-')[0]) // "1" 또는 "6-7" 형태 대비
+
+        verseLabels.forEach((label, idx) => {
+          const verseText = label.textContent.split('-')[0]
+          const verseNo = parseInt(verseText)
 
           if (!verseNo) return
 
-          // 절 번호 span들 제거 후 텍스트만 추출
-          el.querySelectorAll('span').forEach(s => s.remove())
-          const text = el.textContent.trim()
+          // 절 번호 span부터 다음 절 번호 span(또는 끝)까지의 텍스트 수집
+          let text = ''
+          let node = label.nextSibling
+          const nextLabel = verseLabels[idx + 1]
 
-          verses.push({
-            verse: verseNo,
-            text: text || '[본문 없음]'
-          })
+          while (node && node !== nextLabel) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              text += node.textContent
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              // span 태그는 스킵하고 하위 텍스트만 추출
+              if (node.tagName === 'SPAN') {
+                text += node.textContent
+              } else {
+                text += node.textContent
+              }
+            }
+            node = node.nextSibling
+          }
+
+          text = text.trim()
+
+          if (text) {
+            verses.push({
+              verse: verseNo,
+              text: text
+            })
+          }
         })
 
         if (verses.length === 0) {
