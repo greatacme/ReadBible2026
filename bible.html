@@ -328,35 +328,21 @@
 
           const nextLabel = verseLabels[idx + 1]
           let text = ''
-          let foundStart = false
 
-          // body 전체를 깊이 우선 순회하되, label부터 nextLabel 직전까지만 수집
+          // label의 다음 형제부터 nextLabel 직전까지 수집
           function walk(node) {
-            // 다음 절 번호 span을 만나면 중단
-            if (node === nextLabel) {
-              return 'stop'
-            }
+            // 다음 절 번호를 만나면 중단
+            if (node === nextLabel) return 'stop'
 
-            // 수집 시작: label을 만나면
-            if (node === label) {
-              foundStart = true
-            }
-
-            // 수집 중: 텍스트와 요소 내용 추가
-            if (foundStart && node !== label && node !== nextLabel) {
-              if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent
-              } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // 다음 절 번호를 포함하지 않으면 텍스트만 추출
-                if (!node.contains(nextLabel)) {
-                  // 직접 텍스트만 (자식은 별도로 순회)
-                  for (const child of node.childNodes) {
-                    if (child.nodeType === Node.TEXT_NODE) {
-                      text += child.textContent
-                    }
-                  }
-                }
+            if (node.nodeType === Node.TEXT_NODE) {
+              text += node.textContent
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              // 다음 절 번호를 포함하면 스킵
+              if (node.contains(nextLabel)) {
+                return null
               }
+              // 요소의 textContent 추가
+              text += node.textContent
             }
 
             // 자식 순회
@@ -368,7 +354,14 @@
             return null
           }
 
-          walk(htmlDoc.body)
+          // label의 nextSibling부터 시작
+          let node = label.nextSibling
+          while (node) {
+            const result = walk(node)
+            if (result === 'stop') break
+            node = node.nextSibling
+          }
+
           text = text.replace(/\s+/g, ' ').trim()
 
           if (text) {
