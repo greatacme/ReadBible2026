@@ -281,29 +281,47 @@
 
           if (!verseNo) return
 
-          // 절 번호 span의 부모 div부터 다음 절 번호 span의 부모 div 이전까지 수집
-          let text = ''
-          const labelParent = label.closest('div')
           const nextLabel = verseLabels[idx + 1]
-          const nextLabelParent = nextLabel?.closest('div')
 
-          // 현재 div에서 절 번호 span 이후부터 모든 텍스트
+          // 절 번호 span 다음부터 다음 절 번호 span 직전까지 모든 텍스트 수집
+          // div 경계를 무시하고 순수 텍스트만 추출
+          let text = ''
           let node = label.nextSibling
-          while (node && labelParent.contains(node)) {
-            if (node.nodeType === Node.TEXT_NODE) {
-              text += node.textContent
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-              text += node.textContent
-            }
-            node = node.nextSibling
-          }
+          const walker = htmlDoc.createTreeWalker(
+            htmlDoc.documentElement,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+          )
 
-          // 다음 div들을 순회 (다음 절 번호 span 부모까지)
-          let currentDiv = labelParent?.nextElementSibling
-          while (currentDiv && currentDiv !== nextLabelParent && currentDiv.nodeType === Node.ELEMENT_NODE) {
-            if (currentDiv.contains(nextLabel)) break
-            text += currentDiv.textContent
-            currentDiv = currentDiv.nextElementSibling
+          // 현재 label부터 시작하는 위치 찾기
+          let currentNode = label
+          let collecting = false
+
+          const allNodes = Array.from(htmlDoc.querySelectorAll('*'))
+          let startIdx = allNodes.indexOf(label)
+
+          for (let i = startIdx + 1; i < allNodes.length; i++) {
+            const el = allNodes[i]
+
+            // 다음 절 번호 span을 발견하면 중단
+            if (nextLabel && el === nextLabel) break
+
+            // 텍스트 노드 추출
+            const textContent = el.textContent
+            if (textContent && el !== label && el !== nextLabel) {
+              // span 태그면 직접 텍스트, 다른 태그면 전체 innerText
+              if (el.tagName === 'SPAN') {
+                // span 자신의 직접 텍스트만
+                for (const child of el.childNodes) {
+                  if (child.nodeType === Node.TEXT_NODE) {
+                    text += child.textContent
+                  }
+                }
+              } else {
+                text += el.textContent
+              }
+            }
           }
 
           text = text.replace(/[\n\s]+/g, ' ').trim()
