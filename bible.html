@@ -277,12 +277,13 @@
         for (const div of htmlDoc.querySelectorAll('div > div')) {
           const lbl = div.querySelector('span.yv-vlbl')
           if (lbl) {
-            const verseNo = parseInt(lbl.textContent.split('-')[0])
+            const lblText = lbl.textContent.trim()
+            const verseNo = parseInt(lblText.split('-')[0])
             if (!verseNo) continue
             const clone = div.cloneNode(true)
             clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
             const text = clone.textContent.trim()
-            cur = { verse: verseNo, lines: text ? [text] : [] }
+            cur = { verse: lblText, lines: text ? [text] : [] }
             verses.push(cur)
           } else if (cur) {
             const text = div.textContent.trim()
