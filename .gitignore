@@ -2,5 +2,4 @@ data/
 __pycache__/
 *.pyc
 .venv/
-
-__pycache__/
+proxy_local.py

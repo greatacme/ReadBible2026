@@ -271,109 +271,25 @@
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
 
-        // span.yv-vlbl (절 번호)들을 찾아서 절별로 그룹화
-        const verseLabels = Array.from(htmlDoc.querySelectorAll('span.yv-vlbl'))
+        // 각 div가 하나의 행. span.yv-vlbl 있으면 새 절 시작, 없으면 현재 절의 다음 행.
         const verses = []
-
-        // 헬퍼: 요소의 직접 자식 텍스트만 추출 (하위 요소는 제외)
-        function getDirectText(el) {
-          let text = ''
-          for (const node of el.childNodes) {
-            if (node.nodeType === Node.TEXT_NODE) {
-              text += node.textContent
-            }
+        let cur = null
+        for (const div of htmlDoc.querySelectorAll('div > div')) {
+          const lbl = div.querySelector('span.yv-vlbl')
+          if (lbl) {
+            const verseNo = parseInt(lbl.textContent.split('-')[0])
+            if (!verseNo) continue
+            const clone = div.cloneNode(true)
+            clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
+            const text = clone.textContent.trim()
+            cur = { verse: verseNo, lines: text ? [text] : [] }
+            verses.push(cur)
+          } else if (cur) {
+            const text = div.textContent.trim()
+            if (text) cur.lines.push(text)
           }
-          return text
         }
-
-        // 깊이 우선 순회로 두 노드 사이의 텍스트 수집
-        function collectTextBetween(startNode, endNode) {
-          let text = ''
-          let collecting = false
-          let current = startNode
-
-          function traverse(node) {
-            if (node === endNode) {
-              return true // 끝 노드 도달
-            }
-
-            if (collecting && node !== startNode) {
-              if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent
-              } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // 텍스트 노드는 직접 추가, 요소는 자식까지 전부
-                if (node !== endNode && !node.contains(endNode)) {
-                  text += node.textContent
-                }
-              }
-            }
-
-            // 자식 순회
-            for (const child of node.childNodes) {
-              if (traverse(child)) return true
-            }
-            return false
-          }
-
-          collecting = true
-          traverse(startNode.parentElement || htmlDoc.body)
-          return text
-        }
-
-        verseLabels.forEach((label, idx) => {
-          const verseText = label.textContent.split('-')[0]
-          const verseNo = parseInt(verseText)
-
-          if (!verseNo) return
-
-          const nextLabel = verseLabels[idx + 1]
-          let text = ''
-          let foundStart = false
-
-          // body 전체를 깊이 우선 순회, label부터 nextLabel 전까지 TEXT_NODE만 수집
-          function walk(node) {
-            // 다음 절 번호를 만나면 중단
-            if (node === nextLabel) return 'stop'
-
-            // 수집 시작
-            if (node === label) {
-              foundStart = true
-              // label 자신의 자식(절 번호)은 순회하지 않음
-              return null
-            }
-
-            // 수집 중: TEXT_NODE만 추가 (요소 경계에 스페이스 보장)
-            if (foundStart && node.nodeType === Node.TEXT_NODE) {
-              const content = node.textContent.trim()
-              if (content) {
-                // 이전 텍스트와 현재 텍스트 사이에 스페이스 추가
-                if (text && !text.endsWith(' ')) {
-                  text += ' '
-                }
-                text += content
-              }
-            }
-
-            // 자식 순회
-            for (const child of node.childNodes) {
-              const result = walk(child)
-              if (result === 'stop') return 'stop'
-            }
-
-            return null
-          }
-
-          walk(htmlDoc.body)
-          // 개행은 유지, 불필요한 공백만 정리
-          text = text.replace(/[ \t\n]*\n[ \t\n]*/g, '\n').replace(/[ \t]+/g, ' ').trim()
-
-          if (text) {
-            verses.push({
-              verse: verseNo,
-              text: text
-            })
-          }
-        })
+        verses.forEach(v => { v.text = v.lines.join('\n'); delete v.lines })
 
         if (verses.length === 0) {
           document.getElementById('content').innerHTML =
