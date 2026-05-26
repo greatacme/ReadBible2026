@@ -8,6 +8,11 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
   <title>성경 읽기</title>
+  <style>
+    #content table { border-collapse: collapse; width: 100%; margin: 0.25rem 0; }
+    #content td, #content th { border: 1px solid #d1d5db; padding: 3px 8px; font-size: 0.875rem; }
+    #content sup { font-size: 0.7em; vertical-align: super; }
+  </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -275,26 +280,48 @@
         const parser = new DOMParser()
         const htmlDoc = parser.parseFromString(data.content, 'text/html')
 
-        // 각 div가 하나의 행. span.yv-vlbl 있으면 새 절 시작, 없으면 현재 절의 다음 행.
+        // div 절 + table 절(td 구조) 모두 처리
         const verses = []
         let cur = null
-        for (const div of htmlDoc.querySelectorAll('div > div')) {
-          const lbl = div.querySelector('span.yv-vlbl')
-          if (lbl) {
-            const lblText = lbl.textContent.trim()
-            const verseNo = parseInt(lblText.split('-')[0])
-            if (!verseNo) continue
-            const clone = div.cloneNode(true)
-            clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
-            const text = clone.textContent.trim()
-            cur = { verse: lblText, lines: text ? [text] : [] }
-            verses.push(cur)
-          } else if (cur) {
-            const text = div.textContent.trim()
-            if (text) cur.lines.push(text)
+        for (const el of htmlDoc.querySelectorAll('div > div, div > table')) {
+          if (el.tagName === 'TABLE') {
+            if (el.querySelector('span.yv-vlbl')) {
+              // tr마다 절 번호 있는 테이블 (민수기 1장 방식): 각 행을 절로 처리
+              cur = null
+              for (const tr of el.querySelectorAll('tr')) {
+                const lbl = tr.querySelector('span.yv-vlbl')
+                if (!lbl) continue
+                const lblText = lbl.textContent.trim()
+                if (!parseInt(lblText.split('-')[0])) continue
+                const tds = tr.querySelectorAll('td')
+                const firstClone = tds[0].cloneNode(true)
+                firstClone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
+                let text = firstClone.textContent.trim()
+                for (let i = 1; i < tds.length; i++) {
+                  const t = tds[i].textContent.trim()
+                  if (t) text += ' ' + t
+                }
+                if (text) verses.push({ verse: lblText, html: text })
+              }
+            } else if (cur) {
+              // 절 번호 없는 테이블 (민수기 4장 방식): 이전 절에 테이블 HTML 붙임
+              cur.html += el.outerHTML
+            }
+          } else {
+            const lbl = el.querySelector('span.yv-vlbl')
+            if (lbl) {
+              const lblText = lbl.textContent.trim()
+              if (!parseInt(lblText.split('-')[0])) continue
+              const clone = el.cloneNode(true)
+              clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
+              cur = { verse: lblText, html: clone.innerHTML.trim() }
+              verses.push(cur)
+            } else if (cur) {
+              const html = el.innerHTML.trim()
+              if (html) cur.html += ' ' + html
+            }
           }
         }
-        verses.forEach(v => { v.text = v.lines.join('\n'); delete v.lines })
 
         if (verses.length === 0) {
           document.getElementById('content').innerHTML =
@@ -317,7 +344,7 @@
         ${verses.map(v => `
           <div class="flex gap-3 mb-3">
             <span class="text-blue-400 text-xs font-bold w-5 flex-shrink-0 pt-1">${v.verse}</span>
-            <p class="text-gray-800 text-sm leading-7">${v.text.replace(/\n/g, '<br>')}</p>
+            <div class="text-gray-800 text-sm leading-7">${'html' in v ? v.html : v.text.replace(/\n/g, '<br>')}</div>
           </div>
         `).join('')}
       `
