@@ -108,7 +108,7 @@
       const { data: groups } = await sb.from('groups').select('group_code, group_nm')
         .eq('ministry_cd', ministryCode)
       if (groups) groups.sort((a, b) =>
-        a.group_code.localeCompare(b.group_code, 'ko', { numeric: true })
+        (a.group_nm || '').localeCompare(b.group_nm || '', 'ko', { numeric: true })
       )
       const listEl = document.getElementById('groupList')
 
