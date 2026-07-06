@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .venv/
 proxy_local.py
+.env
