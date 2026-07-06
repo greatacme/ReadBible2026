@@ -7,6 +7,15 @@
 
 ---
 
+## ver.3.18.2026.0706
+- feat: NIV(2011) 성경 버전 지원 추가
+  - 화면 표시명: `NIV(2011)`, 저장 코드: `NIV11`
+  - YouVersion Bible ID 111로 본문 조회
+  - bible.html 상단 성경 버전 콤보와 edit.html 프로필 편집에 NIV(2011) 옵션 추가
+- fix: YouVersion HTML 파서 확장
+  - NIV11처럼 한 문단 안에 여러 절 번호가 있는 응답을 절 단위로 분리
+  - KLB 대표 장 비교 확인: 기존 KLB 파싱 결과 유지
+
 ## ver.3.17.2026.0706
 - feat: bible.html 상단 헤더에 성경 버전 선택 콤보 추가
   - 개역한글(KJV) / 현대인의성경(KLB) 선택 가능

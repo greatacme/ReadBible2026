@@ -98,6 +98,7 @@
       class="version-preview">
       <option value="KJV">개역한글</option>
       <option value="KLB">현대인의성경</option>
+      <option value="NIV11">NIV(2011)</option>
     </select>
     <div id="saveIndicator" class="save-indicator">
       저장됨 ✓
@@ -182,14 +183,17 @@
     let prevPlan         = null
     let nextPlan         = null
 
-    const klbBibleId = 86  // KLB (Korean Living Bible) Bible ID
+    const youVersionBibleIds = {
+      KLB: 86,
+      NIV11: 111
+    }
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bm9ocHByZGpudmRqY2NlZG5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY1NzYsImV4cCI6MjA4OTM5MjU3Nn0.GYpMk0VTi4lSsrWtiqeW5AZ3BulCUv3lg13_VBJeyd4'
     let bibleStructure = {}  // 성경 구조 캐시 (책별 절 정보)
 
     function syncBibleVersionPreview() {
       const select = document.getElementById('bibleVersionPreview')
       if (!select) return
-      select.value = bibleVerCd === 'KLB' ? 'KLB' : 'KJV'
+      select.value = youVersionBibleIds[bibleVerCd] ? bibleVerCd : 'KJV'
     }
 
     document.getElementById('bibleVersionPreview')
@@ -197,7 +201,7 @@
 
     async function changeBibleVersion(nextVersion) {
       const select = document.getElementById('bibleVersionPreview')
-      const normalizedVersion = nextVersion === 'KLB' ? 'KLB' : 'KJV'
+      const normalizedVersion = nextVersion === 'KLB' || nextVersion === 'NIV11' ? nextVersion : 'KJV'
       const prevVersion = bibleVerCd
       if (normalizedVersion === prevVersion) return
 
@@ -304,8 +308,8 @@
       // - 'KLB': YouVersion API (현대인의 성경)
       // - 'KJV': helloao.org API (개역한글)
       // - 그 외 (RNKSV 등): Supabase verse 테이블
-      if (bibleVerCd === 'KLB') {
-        await loadChapterFromYouVersion()
+      if (youVersionBibleIds[bibleVerCd]) {
+        await loadChapterFromYouVersion(youVersionBibleIds[bibleVerCd])
       } else if (bibleVerCd === 'KJV') {
         await loadChapterFromAPI()
       } else {
@@ -359,7 +363,7 @@
     }
 
 // ── YouVersion API로 본문 로드 (HTML 포맷, 절 단위 파싱) ────────────────
-    async function loadChapterFromYouVersion() {
+    async function loadChapterFromYouVersion(bibleId) {
       try {
         const code = BOOK_CODES[book]
         if (!code) {
@@ -373,10 +377,10 @@
         let url, fetchOptions = {}
         if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
           // 로컬: 프록시 서버
-          url = `/youversion/bibles/${klbBibleId}/passages/${passageId}?format=html`
+          url = `/youversion/bibles/${bibleId}/passages/${passageId}?format=html`
         } else {
           // 프로덕션: Supabase Edge Functions
-          url = `https://wwnohpprdjnvdjccednr.supabase.co/functions/v1/youversion-proxy?bible_id=${klbBibleId}&passage_id=${passageId}&format=html`
+          url = `https://wwnohpprdjnvdjccednr.supabase.co/functions/v1/youversion-proxy?bible_id=${bibleId}&passage_id=${passageId}&format=html`
           fetchOptions = {
             headers: {
               'Authorization': `Bearer ${supabaseAnonKey}`
@@ -404,6 +408,32 @@
         // div 절 + table 절(td 구조) 모두 처리
         const verses = []
         let cur = null
+        const escapeHtml = text => text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+        const nodeToHtml = node => {
+          if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent)
+          if (node.nodeType !== Node.ELEMENT_NODE) return ''
+          if (node.matches('span.yv-v')) return ''
+          return node.outerHTML
+        }
+        const appendInlineVerses = el => {
+          let foundLabel = false
+          for (const node of el.childNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE && node.matches('span.yv-vlbl')) {
+              const lblText = node.textContent.trim()
+              if (!parseInt(lblText.split('-')[0])) continue
+              cur = { verse: lblText, html: '' }
+              verses.push(cur)
+              foundLabel = true
+              continue
+            }
+            if (cur) cur.html += nodeToHtml(node)
+          }
+          if (cur) cur.html = cur.html.trim()
+          return foundLabel
+        }
         for (const el of htmlDoc.querySelectorAll('div > div, div > table')) {
           if (el.tagName === 'TABLE') {
             if (el.querySelector('span.yv-vlbl')) {
@@ -429,17 +459,22 @@
               cur.html += el.outerHTML
             }
           } else {
-            const lbl = el.querySelector('span.yv-vlbl')
-            if (lbl) {
-              const lblText = lbl.textContent.trim()
-              if (!parseInt(lblText.split('-')[0])) continue
-              const clone = el.cloneNode(true)
-              clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
-              cur = { verse: lblText, html: clone.innerHTML.trim() }
-              verses.push(cur)
-            } else if (cur) {
+            const directLabels = el.querySelectorAll(':scope > span.yv-vlbl')
+            if (directLabels.length > 1) {
+              appendInlineVerses(el)
+            } else {
+              const lbl = el.querySelector('span.yv-vlbl')
+              if (lbl) {
+                const lblText = lbl.textContent.trim()
+                if (!parseInt(lblText.split('-')[0])) continue
+                const clone = el.cloneNode(true)
+                clone.querySelectorAll('span.yv-v, span.yv-vlbl').forEach(s => s.remove())
+                cur = { verse: lblText, html: clone.innerHTML.trim() }
+                verses.push(cur)
+              } else if (cur) {
               const html = el.innerHTML.trim()
               if (html) cur.html += ' ' + html
+              }
             }
           }
         }
