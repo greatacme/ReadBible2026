@@ -8,6 +8,9 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
   <title>연세대학교회 성경통독 — 그룹 선택</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -76,13 +79,11 @@
       <p class="text-gray-400 text-sm text-center py-10">불러오는 중...</p>
     </div>
 
-    <article id="dailyVerseCard" class="hidden bg-white rounded-xl shadow p-5 border border-blue-100">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <h2 class="text-sm font-bold text-blue-900">오늘의 암송구절</h2>
-        <span id="dailyVerseMeta" class="text-[11px] text-gray-400 whitespace-nowrap"></span>
-      </div>
-      <p id="dailyVerseText" class="text-gray-800 text-base leading-8"></p>
-      <p id="dailyVerseReference" class="mt-4 text-right text-sm font-semibold text-blue-700"></p>
+    <article id="dailyVerseCard" class="hidden relative overflow-hidden rounded-xl bg-blue-900 px-5 py-6 shadow-lg border border-blue-950">
+      <span aria-hidden="true" class="absolute -top-6 left-3 text-8xl leading-none text-white/10" style="font-family: 'Song Myung', serif;">“</span>
+      <h2 class="relative mb-4 text-sm font-semibold text-blue-200">오늘의 성경 말씀</h2>
+      <p id="dailyVerseText" class="relative text-slate-50 text-xl leading-9" style="font-family: 'Song Myung', serif;"></p>
+      <p id="dailyVerseReference" class="relative mt-5 text-right text-sm font-semibold text-blue-200"></p>
     </article>
   </main>
 
@@ -166,7 +167,6 @@
         const verse = candidates[getDailyVerseIndex(candidates.length)]
         document.getElementById('dailyVerseText').textContent = verse.text
         document.getElementById('dailyVerseReference').textContent = verse.reference
-        document.getElementById('dailyVerseMeta').textContent = `${verse.no || ''} / ${candidates.length}`.trim()
         document.getElementById('dailyVerseCard').classList.remove('hidden')
       } catch (error) {
         console.warn(error)
@@ -285,7 +285,7 @@
     loadGroups()
     loadDailyVerse()
   </script>
-  <footer class="fixed bottom-3 right-4 text-gray-400 text-xs">ver.3.19.2026.0706</footer>
+  <footer class="fixed bottom-3 right-4 text-gray-400 text-xs">ver.3.20.2026.0727</footer>
 
 </body>
 </html>
