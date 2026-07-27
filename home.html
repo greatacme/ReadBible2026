@@ -75,6 +75,15 @@
     <div id="groupList">
       <p class="text-gray-400 text-sm text-center py-10">불러오는 중...</p>
     </div>
+
+    <article id="dailyVerseCard" class="hidden bg-white rounded-xl shadow p-5 border border-blue-100">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-sm font-bold text-blue-900">오늘의 암송구절</h2>
+        <span id="dailyVerseMeta" class="text-[11px] text-gray-400 whitespace-nowrap"></span>
+      </div>
+      <p id="dailyVerseText" class="text-gray-800 text-base leading-8"></p>
+      <p id="dailyVerseReference" class="mt-4 text-right text-sm font-semibold text-blue-700"></p>
+    </article>
   </main>
 
   <script>
@@ -133,6 +142,35 @@
       if (!text || text.length === 0) return false
       // 한글, 영문, 숫자, 공백, 하이픈, 언더스코어, 마침표, 괄호만 허용
       return /^[\p{L}\p{N}\p{M}\s\-_.()]+$/u.test(text)
+    }
+
+    function getDailyVerseIndex(length) {
+      const today = new Date()
+      const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+      let hash = 0
+      for (const char of key) {
+        hash = ((hash * 31) + char.charCodeAt(0)) >>> 0
+      }
+      return hash % length
+    }
+
+    async function loadDailyVerse() {
+      try {
+        const response = await fetch('bible_verses_180.json', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Failed to load daily verse')
+
+        const verses = await response.json()
+        const candidates = verses.filter(v => v && v.text && v.reference)
+        if (candidates.length === 0) return
+
+        const verse = candidates[getDailyVerseIndex(candidates.length)]
+        document.getElementById('dailyVerseText').textContent = verse.text
+        document.getElementById('dailyVerseReference').textContent = verse.reference
+        document.getElementById('dailyVerseMeta').textContent = `${verse.no || ''} / ${candidates.length}`.trim()
+        document.getElementById('dailyVerseCard').classList.remove('hidden')
+      } catch (error) {
+        console.warn(error)
+      }
     }
 
     async function openCreateModal() {
@@ -245,6 +283,7 @@
     })
 
     loadGroups()
+    loadDailyVerse()
   </script>
   <footer class="fixed bottom-3 right-4 text-gray-400 text-xs">ver.3.19.2026.0706</footer>
 
