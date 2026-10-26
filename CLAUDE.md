@@ -152,6 +152,49 @@ GitHub Pages (main 브랜치 root). push 시 자동 배포.
 
 ---
 
+## 로컬 개발 환경 설정
+
+### .env 파일 (프로젝트 루트에 위치, .gitignore 적용)
+
+```dotenv
+YOUVERSION_API_KEY=RNuGQ8nIJAkPojszfsd3VY3djsIAvxTaGAvs2YZkiA79VVjK
+PORT=3000
+```
+
+- **원본 위치:** `D:\Documents\Acme_01\ReadBible2026\.env`
+- `.gitignore`에 `.env` 포함되어 있어 GitHub에 노출되지 않음
+- `YOUVERSION_API_KEY` — YouVersion Platform API 키 (KLB/NIV11 본문 조회에 필요)
+- `YOUVERSION_BASE_URL` 미설정 시 기본값: `https://api.youversion.com/v1`
+
+### 로컬 서버 실행
+
+```powershell
+Set-Location 'D:\Gemini\ReadBible2026'
+node server.js
+# 또는
+npm start   # (동일)
+```
+
+접속 URL: **http://127.0.0.1:3000/**
+
+### YouVersion 프록시 (KLB/NIV11 본문)
+
+- 로컬: `server.js`의 `/youversion/*` 경로 → `https://api.youversion.com/v1/*` 포워딩
+- 헤더 `X-YVP-App-Key` 자동 주입
+- 테스트 예시:
+  ```
+  GET http://127.0.0.1:3000/youversion/bibles/86/passages/GEN.1?format=html
+  ```
+  응답: KLB 창세기 1장 HTML 본문 JSON
+
+| 버전 | bible_id | 비고 |
+|------|----------|------|
+| KLB (현대인의 성경) | 86 | YouVersion 프록시 |
+| NIV11 | 111 | YouVersion 프록시 |
+| KJV (개역한글) | — | helloao.org API 직접 호출 |
+
+---
+
 ## 주의사항
 
 - Supabase anon key 가 HTML에 하드코딩되어 있음 — RLS 정책으로 접근 제어

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
@@ -46,27 +46,43 @@
       <p id="errMsg" class="text-red-500 text-xs mt-2 hidden"></p>
     </section>
 
-    <!-- TOP 차트 -->
-    <section class="bg-white rounded-2xl shadow p-5">
-      <div class="flex items-center gap-2 mb-4">
-        <h2 class="text-base font-semibold text-gray-700">🏆 완독률 TOP</h2>
-        <select id="topCount" onchange="onTopCountChange()"
-          class="border border-gray-300 rounded-lg px-2 py-1 text-base font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <option value="3">3</option>
-          <option value="5" selected>5</option>
-          <option value="10">10</option>
-        </select>
+    <!-- 탭 + TOP 차트 + 전체 참여 현황 -->
+    <section class="bg-white rounded-2xl shadow overflow-hidden">
+      <!-- 탭 헤더 -->
+      <div class="flex divide-x-2 divide-gray-300 bg-gray-100/80">
+        <button class="tab-btn flex-1 py-2.5 text-sm font-semibold transition"
+                data-testament="ALL">전체</button>
+        <button class="tab-btn flex-1 py-2.5 text-sm font-semibold transition"
+                data-testament="OT">구약</button>
+        <button class="tab-btn flex-1 py-2.5 text-sm font-semibold transition"
+                data-testament="NT">신약</button>
       </div>
-      <canvas id="chart" class="hidden"></canvas>
-      <p id="chartEmpty" class="text-gray-400 text-sm text-center py-4 hidden">아직 참여자가 없습니다</p>
-      <p id="chartLoading" class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
-    </section>
 
-    <!-- 전체 참여 현황 -->
-    <section class="bg-white rounded-2xl shadow p-5">
-      <h2 class="text-base font-semibold text-gray-700 mb-3">📋 전체 참여 현황</h2>
-      <div id="userList">
-        <p class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
+      <!-- 탭 콘텐츠 -->
+      <div class="p-5 space-y-5">
+        <!-- TOP 차트 -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-base font-semibold text-gray-700">🏆 완독률 TOP</h2>
+            <select id="topCount" onchange="onTopCountChange()"
+              class="border border-gray-300 rounded-lg px-2 py-1 text-base font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <canvas id="chart" class="hidden"></canvas>
+          <p id="chartEmpty" class="text-gray-400 text-sm text-center py-4 hidden">아직 참여자가 없습니다</p>
+          <p id="chartLoading" class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
+        </div>
+
+        <!-- 전체 참여 현황 -->
+        <div>
+          <h2 class="text-base font-semibold text-gray-700 mb-3">📋 개인별 진도</h2>
+          <div id="userList">
+            <p class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -115,6 +131,47 @@
 
     let chartInstance = null
     let allStats = []
+    let currentTestament = localStorage.getItem('readbible_tab') || 'ALL'
+
+    const TAB_THEMES = {
+      ALL: {
+        activeBtn: 'tab-btn flex-1 py-3 text-sm font-bold text-blue-900 bg-blue-100/70 transition',
+        inactiveBtn: 'tab-btn flex-1 py-3 text-sm font-semibold text-gray-500 bg-gray-100/90 hover:text-blue-700 hover:bg-blue-50/50 transition',
+        barColors: ['#1e3a8a', '#1d4ed8', '#2563eb', '#93c5fd']
+      },
+      OT: {
+        activeBtn: 'tab-btn flex-1 py-3 text-sm font-bold text-amber-950 bg-amber-100/80 transition',
+        inactiveBtn: 'tab-btn flex-1 py-3 text-sm font-semibold text-gray-500 bg-gray-100/90 hover:text-amber-800 hover:bg-amber-50/50 transition',
+        barColors: ['#78350f', '#92400e', '#b45309', '#fcd34d']
+      },
+      NT: {
+        activeBtn: 'tab-btn flex-1 py-3 text-sm font-bold text-emerald-950 bg-emerald-100/80 transition',
+        inactiveBtn: 'tab-btn flex-1 py-3 text-sm font-semibold text-gray-500 bg-gray-100/90 hover:text-emerald-800 hover:bg-emerald-50/50 transition',
+        barColors: ['#064e3b', '#065f46', '#047857', '#6ee7b7']
+      }
+    }
+
+    function applyTabStyles() {
+      const theme = TAB_THEMES[currentTestament] || TAB_THEMES.ALL
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.className = (b.dataset.testament === currentTestament) ? theme.activeBtn : theme.inactiveBtn
+      })
+    }
+
+
+
+    // ── 탭 초기화 ────────────────────────────────────────────────────────
+    function initTabs() {
+      applyTabStyles()
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentTestament = btn.dataset.testament
+          localStorage.setItem('readbible_tab', currentTestament)
+          applyTabStyles()
+          loadStats()
+        })
+      })
+    }
 
     async function loadStats() {
       if (!groupCode) return
@@ -124,9 +181,16 @@
         document.getElementById('topCount').value = savedTopCount
       }
 
+      // 로딩 상태 초기화
+      document.getElementById('chart').classList.add('hidden')
+      document.getElementById('chartEmpty').classList.add('hidden')
+      document.getElementById('chartLoading').classList.remove('hidden')
+      document.getElementById('userList').innerHTML =
+        '<p class="text-gray-400 text-sm text-center py-4">불러오는 중...</p>'
+
       const [{ data: grp }, { data, error }] = await Promise.all([
         sb.from('groups').select('plan_set_cd, group_nm').eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle(),
-        sb.rpc('get_stats_v2', { p_group_code: groupCode })
+        sb.rpc('get_stats_v3', { p_group_code: groupCode, p_testament: currentTestament })
       ])
       if (!grp) { location.replace(`home.html?ministry=${encodeURIComponent(ministryCode)}`); return }
       document.getElementById('siteSubtitle').textContent = `${grp.group_nm} group`
@@ -165,9 +229,10 @@
           datasets: [{
             label: '완독률 (%)',
             data: data.map(d => Number(d.rate)),
-            backgroundColor: data.map((_, i) =>
-              i === 0 ? '#1e3a8a' : i === 1 ? '#1d4ed8' : i === 2 ? '#2563eb' : '#93c5fd'
-            ),
+            backgroundColor: data.map((_, i) => {
+              const colors = (TAB_THEMES[currentTestament] || TAB_THEMES.ALL).barColors
+              return colors[Math.min(i, colors.length - 1)]
+            }),
             borderRadius: 6,
           }]
         },
@@ -186,7 +251,7 @@
       document.getElementById('userList').innerHTML = data.map((u, i) => `
         <div class="flex items-center justify-between py-2 border-b last:border-0 cursor-pointer
                     hover:bg-slate-50 px-1 rounded"
-             onclick="location.href='record.html?nickname=${encodeURIComponent(u.nickname)}${groupParam}'">
+             onclick="location.href='record.html?nickname=${encodeURIComponent(u.nickname)}${groupParam}&testament=${currentTestament}'">
           <div class="flex items-center gap-3">
             <span class="text-gray-400 text-xs w-5 text-right">${i + 1}</span>
             <span class="text-sm font-medium text-gray-800">${u.nickname}</span>
@@ -251,6 +316,7 @@
       document.getElementById('nicknameInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') goRecord()
       })
+      initTabs()
       loadStats()
     })
   </script>
