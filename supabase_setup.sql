@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS public.groups (
   plan_set_cd text,
   plan_set_id integer DEFAULT 1,
   created_at timestamp with time zone DEFAULT now(),
-  PRIMARY KEY (group_code, ministry_cd)
+  PRIMARY KEY (group_code, ministry_cd),
+  CONSTRAINT groups_group_code_unique UNIQUE (group_code)
 );
 
 -- 3. users 테이블 (사용자)
@@ -31,7 +32,9 @@ CREATE TABLE IF NOT EXISTS public.users (
   ministry_cd text NOT NULL DEFAULT '0',
   bible_ver_cd text,
   created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT users_nickname_group_ministry_unique UNIQUE (nickname, group_code, ministry_cd)
+  CONSTRAINT users_nickname_group_ministry_unique UNIQUE (nickname, group_code, ministry_cd),
+  CONSTRAINT users_group_code_fkey FOREIGN KEY (group_code)
+    REFERENCES public.groups(group_code) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- 4. plans 테이블 (성경 읽기 일정)

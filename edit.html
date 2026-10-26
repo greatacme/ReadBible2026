@@ -117,7 +117,7 @@
     // 사용자 정보 로드 (성경 버전 포함)
     async function loadUser() {
       const { data: user } = await sb.from('users').select('bible_ver_cd')
-        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (user?.bible_ver_cd) {
         document.getElementById('inputBibleVer').value = user.bible_ver_cd
       } else {
@@ -223,13 +223,13 @@
 
       // 현재 사용자 조회
       const { data: user } = await sb.from('users').select('id')
-        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (!user) { showError('사용자를 찾을 수 없습니다.'); return }
 
       // 닉네임+그룹 중복 확인 (자신 제외)
       if (newNickname !== nickname || newGroup !== groupCode) {
         const { data: dup } = await sb.from('users').select('id')
-          .eq('nickname', newNickname).eq('group_code', newGroup).eq('ministry_cd', ministryCode).maybeSingle()
+          .eq('nickname', newNickname).eq('group_code', newGroup).maybeSingle()
         if (dup && dup.id !== user.id) {
           showError('해당 그룹에 이미 같은 닉네임이 존재합니다.')
           return
@@ -259,7 +259,7 @@
       }
 
       const { error } = await sb.from('users')
-        .update({ nickname: newNickname, group_code: newGroup, ministry_cd: ministryCode, bible_ver_cd: newBibleVer })
+        .update({ nickname: newNickname, group_code: newGroup, bible_ver_cd: newBibleVer })
         .eq('id', user.id)
       if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
@@ -271,7 +271,7 @@
       if (!confirm(`'${nickname}' 계정과 모든 기록을 삭제합니다. 계속하시겠습니까?`)) return
 
       const { data: user } = await sb.from('users').select('id')
-        .eq('nickname', nickname).eq('group_code', groupCode).eq('ministry_cd', ministryCode).maybeSingle()
+        .eq('nickname', nickname).eq('group_code', groupCode).maybeSingle()
       if (!user) { showError('사용자를 찾을 수 없습니다.'); return }
 
       await sb.from('records').delete().eq('user_id', user.id)

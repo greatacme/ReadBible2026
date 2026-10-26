@@ -7,6 +7,12 @@
 
 ---
 
+## ver.3.21.2026.1026
+- refactor: 사용자 소속 조회에서 `users.ministry_cd` 의존성 제거
+  - 사용자 조회·등록·수정 기준을 `nickname`과 전역 고유 `group_code`로 단순화
+  - `get_stats_v2(p_group_code)` 함수로 그룹 통계 조회 전환
+  - `groups.group_code` UNIQUE 및 `users.group_code` 외래키 마이그레이션 추가
+
 ## ver.3.20.2026.1012
 - fix: 나훔서 성경 본문 조회 오류 수정
   - 나훔서 표준 책 식별자를 `NAH`에서 `NAM`으로 변경

@@ -127,7 +127,7 @@
       document.getElementById('errorMsg').classList.add('hidden')
 
       // 소속 사용자 수 확인
-      const { data: users } = await sb.from('users').select('id').eq('group_code', groupCode).eq('ministry_cd', ministryCode)
+      const { data: users } = await sb.from('users').select('id').eq('group_code', groupCode)
       if (users && users.length > 0) {
         showError(`이 그룹에 ${users.length}명의 사용자가 있습니다. 모든 사용자를 다른 그룹으로 이동한 후 삭제해주세요.`)
         return
