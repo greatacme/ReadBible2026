@@ -10,7 +10,14 @@
   <title>성경 읽기</title>
   <style>
     #content table { border-collapse: collapse; width: 100%; margin: 0.25rem 0; }
-    #content td, #content th { border: 1px solid #d1d5db; padding: 3px 8px; font-size: 0.875rem; }
+    #content td, #content th {
+      border: 1px solid #d1d5db;
+      padding: 3px 8px;
+      font-size: calc(0.875rem * var(--reading-font-scale, 1));
+    }
+    #content .bible-verse-text {
+      font-size: calc(0.875rem * var(--reading-font-scale, 1));
+    }
     #content sup { font-size: 0.7em; vertical-align: super; }
     .bible-header {
       background: #1e3a8a;
@@ -207,7 +214,7 @@
 
     function applyFontSize(value) {
       const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
-      document.documentElement.style.fontSize = `${fontSizePct}%`
+      document.documentElement.style.setProperty('--reading-font-scale', String(fontSizePct / 120))
     }
 
     const youVersionBibleIds = {
@@ -622,7 +629,7 @@
         ${verses.map(v => `
           <div class="flex gap-3 mb-2">
             <span class="text-blue-400 text-xs font-bold w-5 flex-shrink-0 pt-1">${v.verse}</span>
-            <div class="text-gray-800 text-sm leading-7">${'html' in v ? v.html : v.text.replace(/\n/g, '<br>')}</div>
+            <div class="bible-verse-text text-gray-800 text-sm leading-7">${'html' in v ? v.html : v.text.replace(/\n/g, '<br>')}</div>
           </div>
         `).join('')}
         ${sourceNotice ? `<div class="bible-source">${sourceNotice}</div>` : ''}

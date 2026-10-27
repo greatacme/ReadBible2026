@@ -12,6 +12,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
+    #content .reading-chapter-text {
+      font-size: calc(0.875rem * var(--reading-font-scale, 1));
+    }
     .focus-row {
       animation: highlight 2s ease-out forwards;
     }
@@ -88,7 +91,7 @@
 
     function applyFontSize(value) {
       const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
-      document.documentElement.style.fontSize = `${fontSizePct}%`
+      document.documentElement.style.setProperty('--reading-font-scale', String(fontSizePct / 120))
     }
 
     // ── 필터링된 기록 조회 ─────────────────────────────────────────────
@@ -161,7 +164,7 @@
                   onchange="save(${ch.plan_id}, this.checked)"
                   class="w-4 h-4 accent-blue-700 cursor-pointer flex-shrink-0"/>
                 <label for="chk-${ch.plan_id}"
-                  class="text-sm cursor-pointer select-none
+                  class="reading-chapter-text cursor-pointer select-none
                          ${ch.completed ? 'text-gray-400 line-through' : 'text-gray-800'}">
                   ${ch.book} ${ch.chapter_no}장
                 </label>
