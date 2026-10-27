@@ -29,14 +29,16 @@
   <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
     <button onclick="location.href='index.html?group=' + encodeURIComponent(groupCode) + '&ministry=' + encodeURIComponent(ministryCode)" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
     <div class="flex-1 min-w-0">
-      <h1 id="userName" class="text-base font-bold truncate">성경통독 기록</h1>
-      <p id="userRate" class="text-blue-300 text-xs"></p>
+      <div class="flex min-w-0 items-center gap-2">
+          <h1 id="userName" class="min-w-0 flex-1 text-base font-bold truncate">성경통독 기록</h1>
+        <div id="saveIndicator" class="text-xs text-green-300 opacity-0 transition-opacity duration-500 whitespace-nowrap">
+          저장됨 ✓
+        </div>
+        <button onclick="location.href='edit.html?nickname=' + encodeURIComponent(nickname) + groupParam"
+          class="text-blue-300 hover:text-white text-xs whitespace-nowrap">설정</button>
+      </div>
+      <p id="userRate" class="text-blue-300 text-xs whitespace-nowrap"></p>
     </div>
-    <div id="saveIndicator" class="text-xs text-green-300 opacity-0 transition-opacity duration-500 whitespace-nowrap">
-      저장됨 ✓
-    </div>
-    <button onclick="location.href='edit.html?nickname=' + encodeURIComponent(nickname) + groupParam"
-      class="text-blue-300 hover:text-white text-sm whitespace-nowrap ml-1">설정</button>
   </header>
 
     <!-- 완독 축하 모달 -->
