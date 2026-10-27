@@ -78,9 +78,12 @@
             <span id="fontSizeValue" class="w-12 text-right text-sm font-semibold tabular-nums text-blue-700">120%</span>
           </div>
           <div class="flex h-10 items-center gap-2">
-            <input id="inputFontSize" type="range" min="80" max="180" step="10" value="120"
-              aria-label="글자 크기"
-              class="w-full min-w-0 accent-blue-700 cursor-pointer"/>
+            <div class="relative h-6 min-w-0 flex-1">
+              <span aria-hidden="true" class="pointer-events-none absolute left-0 top-1/2 z-0 h-4 w-0.5 -translate-y-1/2 bg-slate-500" style="left: calc(14.2857% + 5.7px)"></span>
+              <input id="inputFontSize" type="range" min="100" max="240" step="10" value="120"
+                aria-label="글자 크기"
+                class="relative z-10 h-6 w-full accent-blue-700 cursor-pointer"/>
+            </div>
             <span id="fontSizeSample" class="flex h-10 w-10 flex-shrink-0 items-center justify-center whitespace-nowrap leading-none text-gray-700" aria-hidden="true">가</span>
           </div>
         </div>
@@ -132,7 +135,7 @@
       location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
     function updateFontSizePreview(value) {
-      const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
+      const fontSizePct = Math.min(240, Math.max(100, Number(value) || 120))
       document.getElementById('fontSizeValue').textContent = `${fontSizePct}%`
       document.getElementById('fontSizeSample').style.fontSize = `${fontSizePct / 120}em`
     }

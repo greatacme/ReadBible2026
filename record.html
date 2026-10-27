@@ -90,7 +90,7 @@
     let saveTimer  = null
 
     function applyFontSize(value) {
-      const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
+      const fontSizePct = Math.min(240, Math.max(100, Number(value) || 120))
       document.documentElement.style.setProperty('--reading-font-scale', String(fontSizePct / 120))
     }
 

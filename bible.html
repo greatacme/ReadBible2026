@@ -17,6 +17,7 @@
     }
     #content .bible-verse-text {
       font-size: calc(0.875rem * var(--reading-font-scale, 1));
+      line-height: 2;
     }
     #content sup { font-size: 0.7em; vertical-align: super; }
     .bible-header {
@@ -213,7 +214,7 @@
     let nextPlan         = null
 
     function applyFontSize(value) {
-      const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
+      const fontSizePct = Math.min(240, Math.max(100, Number(value) || 120))
       document.documentElement.style.setProperty('--reading-font-scale', String(fontSizePct / 120))
     }
 
@@ -629,7 +630,7 @@
         ${verses.map(v => `
           <div class="flex gap-3 mb-2">
             <span class="text-blue-400 text-xs font-bold w-5 flex-shrink-0 pt-1">${v.verse}</span>
-            <div class="bible-verse-text text-gray-800 text-sm leading-7">${'html' in v ? v.html : v.text.replace(/\n/g, '<br>')}</div>
+            <div class="bible-verse-text text-gray-800 text-sm">${'html' in v ? v.html : v.text.replace(/\n/g, '<br>')}</div>
           </div>
         `).join('')}
         ${sourceNotice ? `<div class="bible-source">${sourceNotice}</div>` : ''}
