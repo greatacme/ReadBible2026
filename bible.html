@@ -93,6 +93,7 @@
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body class="bg-white min-h-screen">
 
@@ -112,6 +113,19 @@
     </div>
     <div id="planDate" class="plan-date"></div>
   </header>
+
+    <!-- 완독 축하 모달 -->
+  <div id="congratsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4">
+      <div class="text-5xl">🎊</div>
+      <h3 id="congratsTitle" class="text-xl font-bold text-gray-800">축하합니다! 완독하셨습니다.</h3>
+      <p id="congratsDesc" class="text-sm text-gray-600 leading-relaxed"></p>
+      <button onclick="closeCongratsModal()"
+        class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl text-sm shadow-md transition">
+        은혜를 기억하며 확인
+      </button>
+    </div>
+  </div>
 
   <main class="max-w-2xl mx-auto px-4 pt-4 pb-28">
     <div id="content">
@@ -279,6 +293,48 @@
       location.href = `record.html?nickname=${encodeURIComponent(nickname)}${groupParam}`
     }
 
+    // ── 완독 축하 폭죽 & 모달 ──────────────────────────────────────────
+    function launchFireworks() {
+      if (typeof confetti !== 'function') return
+      const count = 200
+      const defaults = { origin: { y: 0.7 } }
+
+      function fire(particleRatio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+          particleCount: Math.floor(count * particleRatio)
+        }))
+      }
+
+      fire(0.25, { spread: 26, startVelocity: 55 })
+      fire(0.2, { spread: 60 })
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 })
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 })
+      fire(0.1, { spread: 120, startVelocity: 45 })
+    }
+
+    function showCongratsModal(type) {
+      launchFireworks()
+      const titleEl = document.getElementById('congratsTitle')
+      const descEl = document.getElementById('congratsDesc')
+      const modal = document.getElementById('congratsModal')
+
+      if (type === 'ALL') {
+        titleEl.textContent = '축하합니다! 성경 66권 전체 완독!'
+        descEl.innerHTML = `<strong>${nickname}</strong>님, 창세기부터 요한계시록까지<br/>하나님의 말씀을 온전히 완독하셨습니다! ✝`
+      } else if (type === 'OT') {
+        titleEl.textContent = '축하합니다! 구약 완독!'
+        descEl.innerHTML = `<strong>${nickname}</strong>님, 구약 성경 39권(929장)을<br/>모두 완독하셨습니다! 📜`
+      } else if (type === 'NT') {
+        titleEl.textContent = '축하합니다! 신약 완독!'
+        descEl.innerHTML = `<strong>${nickname}</strong>님, 신약 성경 27권(260장)을<br/>모두 완독하셨습니다! 📖`
+      }
+      modal.classList.remove('hidden')
+    }
+
+    function closeCongratsModal() {
+      document.getElementById('congratsModal').classList.add('hidden')
+    }
+
     // ── 읽기 완료 토글 저장 ──────────────────────────────────────────────
     async function toggleComplete(checked) {
       if (!userId || !planId) return
@@ -287,6 +343,44 @@
         { onConflict: 'user_id,plan_id' }
       )
       showSaveIndicator()
+
+      // 완독 체크 (체크했을 때만 가볍게 검사)
+      if (checked) {
+        try {
+          const { data: records } = await sb.from('records')
+            .select('plan_id, completed').eq('user_id', userId).eq('completed', true)
+          const completedSet = new Set((records || []).map(r => r.plan_id))
+          
+          if (!window._cachedPlans) {
+            const [{ data: plans }, { data: books }] = await Promise.all([
+              sb.from('plans').select('id, book').eq('plan_set_cd', planSetCd),
+              sb.from('book').select('name_ko, testament')
+            ])
+            const bMap = Object.fromEntries((books || []).map(b => [b.name_ko, b.testament]))
+            window._cachedPlans = (plans || []).map(p => ({
+              id: p.id,
+              testament: bMap[p.book] || 'OT'
+            }))
+          }
+          
+          const plans = window._cachedPlans
+          const otUnread = plans.filter(p => p.testament === 'OT' && !completedSet.has(p.id)).length
+          const ntUnread = plans.filter(p => p.testament === 'NT' && !completedSet.has(p.id)).length
+          const totalUnread = plans.filter(p => !completedSet.has(p.id)).length
+
+          if (totalUnread === 0) {
+            showCongratsModal('ALL')
+          } else if (otUnread === 0 && !sessionStorage.getItem(`ot_congrats_${userId}`)) {
+            sessionStorage.setItem(`ot_congrats_${userId}`, '1')
+            showCongratsModal('OT')
+          } else if (ntUnread === 0 && !sessionStorage.getItem(`nt_congrats_${userId}`)) {
+            sessionStorage.setItem(`nt_congrats_${userId}`, '1')
+            showCongratsModal('NT')
+          }
+        } catch (e) {
+          console.error('완독 마일스톤 검사 오류:', e)
+        }
+      }
     }
 
     // ── 이전/다음 이동 ───────────────────────────────────────────────────
