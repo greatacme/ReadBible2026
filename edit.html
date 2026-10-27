@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
-  <title>프로필 편집</title>
+  <title>개인 설정</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -15,7 +15,7 @@
 
   <header class="bg-blue-900 text-white px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10">
     <button id="backBtn" class="text-blue-300 hover:text-white text-xl leading-none">←</button>
-    <h1 class="text-base font-bold">프로필 편집</h1>
+    <h1 class="text-base font-bold">개인 설정</h1>
   </header>
 
   <!-- 기록 이전 확인 모달 -->
@@ -72,6 +72,20 @@
           </select>
         </div>
 
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="inputFontSize" class="block text-sm font-semibold text-gray-600">글자 크기</label>
+            <span id="fontSizeValue" class="w-12 text-right text-sm font-semibold tabular-nums text-blue-700">120%</span>
+          </div>
+          <div class="flex h-8 items-center gap-3">
+            <span class="text-xs text-gray-400" aria-hidden="true">가</span>
+            <input id="inputFontSize" type="range" min="80" max="180" step="10" value="120"
+              aria-label="글자 크기"
+              class="w-full min-w-0 accent-blue-700 cursor-pointer"/>
+            <span id="fontSizeSample" class="flex h-8 w-24 flex-shrink-0 items-center justify-center whitespace-nowrap leading-none text-gray-700" aria-hidden="true">가나다</span>
+          </div>
+        </div>
+
         <p id="errorMsg" class="text-red-500 text-xs hidden"></p>
 
         <button id="saveBtn" type="button"
@@ -102,6 +116,10 @@
     const ministryCode = params.get('ministry') || '0'
     if (!nickname || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
 
+    function fontSizeKey(targetNickname = nickname, targetGroup = groupCode) {
+      return `readbible_font_size:${targetGroup}:${ministryCode}:${targetNickname}`
+    }
+
     // 그룹/미니스트리 존재 여부 검증
     async function validateGroup() {
       const { data: grp } = await sb.from('groups').select('group_code')
@@ -114,6 +132,16 @@
     document.getElementById('backBtn').onclick = () =>
       location.href = `record.html?nickname=${encodeURIComponent(nickname)}&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}`
 
+    function updateFontSizePreview(value) {
+      const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
+      document.getElementById('fontSizeValue').textContent = `${fontSizePct}%`
+      document.getElementById('fontSizeSample').style.fontSize = `${fontSizePct / 120}em`
+    }
+
+    document.getElementById('inputFontSize').addEventListener('input', event =>
+      updateFontSizePreview(event.target.value)
+    )
+
     // 사용자 정보 로드 (성경 버전 포함)
     async function loadUser() {
       const { data: user } = await sb.from('users').select('bible_ver_cd')
@@ -123,6 +151,9 @@
       } else {
         document.getElementById('inputBibleVer').value = 'KJV'
       }
+      const fontSizePct = Number(localStorage.getItem(fontSizeKey())) || 120
+      document.getElementById('inputFontSize').value = fontSizePct
+      updateFontSizePreview(fontSizePct)
     }
     loadUser()
 
@@ -216,6 +247,7 @@
       const newNickname = document.getElementById('inputNickname').value.trim()
       const newGroup    = document.getElementById('inputGroup').value.trim()
       const newBibleVer = document.getElementById('inputBibleVer').value.trim()
+      const fontSizePct = Number(document.getElementById('inputFontSize').value)
 
       if (!newNickname) { showError('닉네임을 입력해주세요.'); return }
       if (!isValidNickname(newNickname)) { showError('한글, 영문, 숫자, 공백, 기호(-_.())만 사용 가능합니다'); return }
@@ -263,6 +295,7 @@
         .eq('id', user.id)
       if (error) { showError('저장 중 오류가 발생했습니다.'); return }
 
+      localStorage.setItem(fontSizeKey(newNickname, newGroup), String(fontSizePct))
       location.href = `record.html?nickname=${encodeURIComponent(newNickname)}&group=${encodeURIComponent(newGroup)}&ministry=${encodeURIComponent(ministryCode)}`
     }
 

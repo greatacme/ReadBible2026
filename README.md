@@ -68,9 +68,12 @@ https://greatacme.github.io/ReadBible2026/index.html?group=그룹코드
 - 끝까지 스크롤 시 자동 완료 체크
 - 이전/다음 장 이동
 
-**프로필 편집** (`edit.html?nickname=...&group=...`)
+**개인 설정** (`edit.html?nickname=...&group=...`)
 - 닉네임 변경
 - 그룹 이동 (플랜이 다를 경우 기록 이전/삭제 선택)
+- 글자 크기 설정 (기록 화면 및 성경 읽기 화면에 적용)
+- 글자 크기는 브라우저 로컬 저장소에 사용자별로 저장
+- 성경 버전 설정
 - 계정 삭제
 
 **그룹 편집** (`group-edit.html?group=...`)

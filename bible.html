@@ -185,6 +185,7 @@
     const groupCode    = p.get('group')
     const ministryCode = p.get('ministry') || '0'
     const groupParam = groupCode ? `&group=${encodeURIComponent(groupCode)}&ministry=${encodeURIComponent(ministryCode)}` : ''
+    const fontSizeKey = `readbible_font_size:${groupCode}:${ministryCode}:${nickname}`
 
     if (!nickname || !book || !chapterNo || !groupCode) location.href = `index.html?group=${encodeURIComponent(groupCode || '')}&ministry=${encodeURIComponent(ministryCode)}`
 
@@ -203,6 +204,11 @@
     let saveTimer        = null
     let prevPlan         = null
     let nextPlan         = null
+
+    function applyFontSize(value) {
+      const fontSizePct = Math.min(180, Math.max(80, Number(value) || 120))
+      document.documentElement.style.fontSize = `${fontSizePct}%`
+    }
 
     const youVersionBibleIds = {
       KLB: 86,
@@ -636,6 +642,7 @@
       if (user) {
         userId = user.id
         bibleVerCd = user.bible_ver_cd || 'KJV'
+        applyFontSize(localStorage.getItem(fontSizeKey) || 120)
         syncBibleVersionPreview()
         const { data: rec } = await sb.from('records')
           .select('completed').eq('user_id', userId).eq('plan_id', planId).maybeSingle()
