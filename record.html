@@ -112,7 +112,7 @@
       const labelMap = { 'ALL': '전체', 'OT': '구약', 'NT': '신약' }
       const tabLabel = labelMap[testament] || '전체'
       document.getElementById('userRate').textContent =
-        `[${tabLabel}] 완료율 ${rate}% · ${completed}/${planned}장`
+        `[${tabLabel}] 완료율 ${rate}% · ${completed.toLocaleString('ko-KR')}/${planned.toLocaleString('ko-KR')}장`
     }
 
     // ── 날짜 포맷 ─────────────────────────────────────────────────────

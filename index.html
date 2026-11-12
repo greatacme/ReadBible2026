@@ -260,7 +260,7 @@
             <span class="text-sm font-bold ${Number(u.rate) >= 100 ? 'text-green-600' : 'text-blue-700'}">
               ${u.rate}%
             </span>
-            <span class="text-xs text-gray-400 ml-1">${u.completed}/${u.planned}장</span>
+            <span class="text-xs text-gray-400 ml-1">${Number(u.completed).toLocaleString('ko-KR')}/${Number(u.planned).toLocaleString('ko-KR')}장</span>
           </div>
         </div>
       `).join('')
