@@ -212,6 +212,7 @@
     let saveTimer        = null
     let prevPlan         = null
     let nextPlan         = null
+    let fireworksTimer   = null
 
     function applyFontSize(value) {
       const fontSizePct = Math.min(240, Math.max(100, Number(value) || 120))
@@ -308,8 +309,19 @@
     }
 
     // ── 완독 축하 폭죽 & 모달 ──────────────────────────────────────────
+    function stopFireworks() {
+      if (fireworksTimer) {
+        clearInterval(fireworksTimer)
+        fireworksTimer = null
+      }
+      if (typeof confetti === 'function' && typeof confetti.reset === 'function') {
+        confetti.reset()
+      }
+    }
+
     function launchFireworks() {
       if (typeof confetti !== 'function') return
+      stopFireworks()
       const duration = 5 * 1000 // 5초 동안 지속
       const animationEnd = Date.now() + duration
       const defaults = { startVelocity: 28, spread: 360, ticks: 120, gravity: 0.6, decay: 0.94, zIndex: 9999 }
@@ -318,20 +330,25 @@
         return Math.random() * (max - min) + min
       }
 
-      const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now()
-        if (timeLeft <= 0) {
-          return clearInterval(interval)
+      fireworksTimer = setInterval(function() {
+        try {
+          const timeLeft = animationEnd - Date.now()
+          if (timeLeft <= 0) {
+            stopFireworks()
+            return
+          }
+          const particleCount = 40 * (timeLeft / duration)
+          // 화면 좌/우/중앙에서 천천히 우아하게 퍼지는 연출
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.4), y: Math.random() - 0.2 } }))
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.6, 0.9), y: Math.random() - 0.2 } }))
+        } catch (e) {
+          stopFireworks()
+          console.error('폭죽 실행 오류:', e)
         }
-        const particleCount = 40 * (timeLeft / duration)
-        // 화면 좌/우/중앙에서 천천히 우아하게 퍼지는 연출
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.4), y: Math.random() - 0.2 } }))
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.6, 0.9), y: Math.random() - 0.2 } }))
       }, 250)
     }
 
     function showCongratsModal(type) {
-      launchFireworks()
       const titleEl = document.getElementById('congratsTitle')
       const descEl = document.getElementById('congratsDesc')
       const modal = document.getElementById('congratsModal')
@@ -347,6 +364,7 @@
         descEl.innerHTML = `<strong>${nickname}</strong>님, 신약 성경 27권(260장)을<br/>모두 완독하셨습니다! 📖`
       }
       modal.classList.remove('hidden')
+      launchFireworks()
     }
 
     function closeCongratsModal() {
@@ -370,32 +388,48 @@
           const completedSet = new Set((records || []).map(r => r.plan_id))
           
           if (!window._cachedPlans) {
-            const [{ data: plans }, { data: books }] = await Promise.all([
+            const [{ data: plans, error: plansError }, { data: books, error: booksError }] = await Promise.all([
               sb.from('plans').select('id, book').eq('plan_set_cd', planSetCd),
               sb.from('book').select('name_ko, testament')
             ])
+            if (plansError || booksError) throw plansError || booksError
+
             const bMap = Object.fromEntries((books || []).map(b => [b.name_ko, b.testament]))
+            const unmappedBooks = [...new Set(
+              (plans || [])
+                .map(p => p.book)
+                .filter(bookName => !['OT', 'NT'].includes(bMap[bookName]))
+            )]
+            if (unmappedBooks.length > 0) {
+              throw new Error(`성경 구분 정보 누락: ${unmappedBooks.join(', ')}`)
+            }
+
             window._cachedPlans = (plans || []).map(p => ({
               id: p.id,
-              testament: bMap[p.book] || 'OT'
+              testament: bMap[p.book]
             }))
           }
           
           const plans = window._cachedPlans
+          const changedPlan = plans.find(p => p.id === planId)
+          if (!changedPlan) throw new Error(`읽기 계획을 찾을 수 없습니다: ${planId}`)
+
           const otUnread = plans.filter(p => p.testament === 'OT' && !completedSet.has(p.id)).length
           const ntUnread = plans.filter(p => p.testament === 'NT' && !completedSet.has(p.id)).length
           const totalUnread = plans.filter(p => !completedSet.has(p.id)).length
+          const hasOT = plans.some(p => p.testament === 'OT')
+          const hasNT = plans.some(p => p.testament === 'NT')
 
-          if (totalUnread === 0) {
+          // 구약·신약이 모두 포함된 계획의 마지막 장이면 전체 완독을 우선한다.
+          if (hasOT && hasNT && totalUnread === 0) {
             showCongratsModal('ALL')
-          } else if (otUnread === 0 && !sessionStorage.getItem(`ot_congrats_${userId}`)) {
-            sessionStorage.setItem(`ot_congrats_${userId}`, '1')
+          } else if (changedPlan.testament === 'OT' && otUnread === 0) {
             showCongratsModal('OT')
-          } else if (ntUnread === 0 && !sessionStorage.getItem(`nt_congrats_${userId}`)) {
-            sessionStorage.setItem(`nt_congrats_${userId}`, '1')
+          } else if (changedPlan.testament === 'NT' && ntUnread === 0) {
             showCongratsModal('NT')
           }
         } catch (e) {
+          stopFireworks()
           console.error('완독 마일스톤 검사 오류:', e)
         }
       }
